@@ -1,0 +1,2 @@
+data/translations/*.pdf filter=lfs diff=lfs merge=lfs -text
+data/bhsa/** filter=lfs diff=lfs merge=lfs -text

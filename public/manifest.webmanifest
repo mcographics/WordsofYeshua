@@ -1,0 +1,10 @@
+{
+  "name": "Words of Yeshua",
+  "short_name": "Yeshua",
+  "description": "Explore the words of Yeshua by event, theme, person, place, and time.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f4eedf",
+  "theme_color": "#173d32",
+  "icons": [{ "src": "./mark.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

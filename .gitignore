@@ -1,0 +1,27 @@
+node_modules/
+dist/
+native/build/
+
+# Local reference library: retained on development machines, not part of the
+# application repository. The KJV source and selected runtime indexes remain
+# tracked below by being outside these patterns.
+data/translations/*.pdf
+data/translations/*.docx
+!data/translations/kjv.docx
+data/bhsa/
+data/n1904/
+data/electron_cache/
+
+# Alternate Strong's/source archives. Runtime KJV-HG files and the curated
+# alignment/index files remain trackable.
+data/strongs/BHS-Strong-no/
+data/strongs/greek/
+data/strongs/hebrew/
+data/strongs/build.pl
+data/strongs/index.js
+data/strongs/package.json
+data/strongs/strongs-dictionary.xhtml
+
+# Local generated and scratch output
+*.log
+*.tmp
