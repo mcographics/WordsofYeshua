@@ -117,7 +117,11 @@ function createWindow() {
     height: 820,
     minWidth: 360,
     minHeight: 640,
-    backgroundColor: '#f3f5f6',
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    roundedCorners: true,
+    hasShadow: true,
     show: false,
     title: 'Words of Yeshua',
     webPreferences: {
