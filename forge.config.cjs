@@ -7,9 +7,10 @@ module.exports = {
   packagerConfig: {
     asar: true,
     executableName: 'WordsOfYeshua',
+    icon: path.join(__dirname, 'Assets', 'icon.ico'),
     extraResource: [
       path.join(__dirname, 'native', 'build', 'Release', 'words_of_yeshua_native.node'),
-      path.join(__dirname, 'Assets', 'icon.png'),
+      path.join(__dirname, 'Assets', 'icon.ico'),
     ],
     ignore: [
       /^\/data($|\/)/,
@@ -23,7 +24,13 @@ module.exports = {
   },
   rebuildConfig: {},
   makers: [
-    { name: '@electron-forge/maker-squirrel', config: { name: 'WordsOfYeshua' } },
+    {
+      name: '@electron-forge/maker-squirrel',
+      config: {
+        name: 'WordsOfYeshua',
+        setupIcon: path.join(__dirname, 'Assets', 'icon.ico'),
+      },
+    },
     { name: '@electron-forge/maker-zip', platforms: ['win32'] },
   ],
   plugins: [

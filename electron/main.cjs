@@ -7,6 +7,10 @@ if (process.env.WOY_ELECTRON_SMOKE === '1') {
   app.setPath('userData', path.join(app.getPath('temp'), 'words-of-yeshua-electron-smoke'))
 }
 
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.mcographics.wordsofyeshua')
+}
+
 if (require('electron-squirrel-startup')) {
   app.quit()
 }
@@ -64,8 +68,8 @@ function getNativeModulePath() {
 
 function getApplicationIconPath() {
   return app.isPackaged
-    ? path.join(process.resourcesPath, 'icon.png')
-    : path.join(__dirname, '..', 'Assets', 'icon.png')
+    ? path.join(process.resourcesPath, 'icon.ico')
+    : path.join(__dirname, '..', 'Assets', 'icon.ico')
 }
 
 function loadNativeEngine() {
