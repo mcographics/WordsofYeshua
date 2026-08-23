@@ -22,6 +22,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(196,154,54,.
 .site-header { height: 82px; display: flex; align-items: center; justify-content: space-between; width: min(1120px, calc(100% - 48px)); margin: auto; position: relative; z-index: 20; border-bottom: 1px solid var(--line); }
 .brand { display: flex; align-items: center; gap: 11px; border: 0; background: none; cursor: pointer; padding: 0; text-align: left; }
 .brand-mark { width: 42px; height: 42px; display: inline-grid; place-items: center; background: var(--deep); color: var(--gold-light); border-radius: 13px 13px 13px 4px; }
+.brand-mark img { width: 35px; height: 35px; object-fit: contain; display: block; }
 .brand > span:last-child { display: flex; flex-direction: column; line-height: 1; }
 .brand strong { font: 500 15px var(--serif); } .brand em { color: var(--clay); font: 700 22px var(--serif); font-style: normal; }
 .desktop-nav { display: flex; gap: 6px; }

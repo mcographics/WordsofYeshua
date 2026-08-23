@@ -4,6 +4,7 @@ import {
   Compass, Eye, FileText, Gauge, Heart, Home, Languages, Landmark, LayoutGrid, MapPin, Menu,
   Moon, RotateCcw, Search, Settings, Sparkles, Sun, Tag, Type, UsersRound, X,
 } from 'lucide-react'
+import brandLogo from '../Assets/logo.png'
 import { bibleVerses, catalogueMeta, categoryValues, sayings } from '../data/words-of-yeshua/sayings'
 import type { Category, Saying } from './types'
 import { normalizeSearchText, scoreSearchText } from './search'
@@ -183,7 +184,7 @@ function Header({ view, count, menuOpen, setMenuOpen, navigate }: {
   return (
     <header className="site-header">
       <button className="brand" onClick={() => navigate('home')} aria-label="Words of Yeshua home">
-        <span className="brand-mark"><BookOpen size={21} strokeWidth={1.8} /></span>
+        <span className="brand-mark"><img src={brandLogo} alt="" /></span>
         <span><strong>Words of</strong><em>Yeshua</em></span>
       </button>
       <nav className="desktop-nav" aria-label="Main navigation">
@@ -246,7 +247,7 @@ function HomeView({ onBrowse, onCategory, onOpen, saved, toggle, searchEngine }:
         <span className="timeline-copy"><small>{item.period}</small><strong>{item.title}</strong><em>{item.place}</em></span>
       </button>)}</div>
     </section>
-    <footer><div className="section-wrap footer-inner"><div><span className="brand-mark"><BookOpen size={18} /></span><strong>Words of Yeshua</strong></div>
+    <footer><div className="section-wrap footer-inner"><div><span className="brand-mark"><img src={brandLogo} alt="" /></span><strong>Words of Yeshua</strong></div>
       <div className={`engine-status ${searchEngine}`}><span />{searchEngine === 'native' ? 'C++ search ready' : searchEngine === 'fallback' ? 'Safe search fallback' : 'Browser preview'}</div>
       <p>A Christ-centered study companion generated from the local KJV, speaker, topic, cross-reference, Strong’s, N1904, and Vine’s datasets.</p></div></footer>
   </>

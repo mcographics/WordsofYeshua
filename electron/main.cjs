@@ -62,6 +62,12 @@ function getNativeModulePath() {
   return path.join(__dirname, '..', 'native', 'build', 'Release', 'words_of_yeshua_native.node')
 }
 
+function getApplicationIconPath() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'icon.png')
+    : path.join(__dirname, '..', 'Assets', 'icon.png')
+}
+
 function loadNativeEngine() {
   if (nativeEngine || nativeLoadError) return nativeEngine
   try {
@@ -125,6 +131,7 @@ function createWindow() {
     hasShadow: false,
     show: false,
     title: 'Words of Yeshua',
+    icon: getApplicationIconPath(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,

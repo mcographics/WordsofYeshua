@@ -6,7 +6,10 @@ module.exports = {
   packagerConfig: {
     asar: true,
     executableName: 'WordsOfYeshua',
-    extraResource: [path.join(__dirname, 'native', 'build', 'Release', 'words_of_yeshua_native.node')],
+    extraResource: [
+      path.join(__dirname, 'native', 'build', 'Release', 'words_of_yeshua_native.node'),
+      path.join(__dirname, 'Assets', 'icon.png'),
+    ],
     ignore: [
       /^\/data($|\/)/,
       /^\/native($|\/)/,
