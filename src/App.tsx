@@ -14,7 +14,6 @@ import {
 import type { AppSettings, ResultsPerPage, StartPage } from './settings'
 
 type View = 'home' | 'library' | 'saved' | 'settings'
-type SearchEngine = 'browser' | 'native' | 'fallback'
 
 const categoryMeta: Record<Category, { note: string; icon: typeof CalendarDays; color: string }> = {
   Events: { note: 'What happened', icon: CalendarDays, color: 'clay' },
@@ -64,7 +63,6 @@ export default function App() {
   const [selected, setSelected] = useState<Saying | null>(null)
   const [chapter, setChapter] = useState<{ book: Saying['book']; number: number } | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [searchEngine, setSearchEngine] = useState<SearchEngine>('browser')
   const [searchPending, setSearchPending] = useState(false)
   const [nativeMatches, setNativeMatches] = useState<{ query: string; ids: string[] } | null>(null)
   const { saved, toggle } = useSavedSayings()
@@ -78,16 +76,6 @@ export default function App() {
   const updateSetting = <Key extends keyof AppSettings,>(key: Key, value: AppSettings[Key]) => {
     setSettings((current) => ({ ...current, [key]: value }))
   }
-
-  useEffect(() => {
-    const bridge = window.wordsOfYeshua
-    if (!bridge) return
-    let cancelled = false
-    bridge.getNativeHealth()
-      .then((health) => { if (!cancelled) setSearchEngine(health.ok ? 'native' : 'fallback') })
-      .catch(() => { if (!cancelled) setSearchEngine('fallback') })
-    return () => { cancelled = true }
-  }, [])
 
   useEffect(() => {
     const bridge = window.wordsOfYeshua
@@ -106,7 +94,6 @@ export default function App() {
         .catch(() => {
           if (cancelled) return
           setNativeMatches(null)
-          setSearchEngine('fallback')
           setSearchPending(false)
         })
     }, 120)
@@ -156,7 +143,7 @@ export default function App() {
       <Header view={view} count={saved.length} menuOpen={menuOpen} setMenuOpen={setMenuOpen} navigate={navigate} />
       <main>
         {view === 'home' ? (
-          <HomeView onBrowse={() => navigate('library')} onCategory={browseCategory} onOpen={setSelected} saved={saved} toggle={toggle} searchEngine={searchEngine} />
+          <HomeView onBrowse={() => navigate('library')} onCategory={browseCategory} onOpen={setSelected} saved={saved} toggle={toggle} />
         ) : view === 'settings' ? (
           <SettingsView settings={settings} updateSetting={updateSetting} resetSettings={() => setSettings({ ...DEFAULT_APP_SETTINGS })} />
         ) : (
@@ -206,8 +193,8 @@ function Header({ view, count, menuOpen, setMenuOpen, navigate }: {
   )
 }
 
-function HomeView({ onBrowse, onCategory, onOpen, saved, toggle, searchEngine }: {
-  onBrowse: () => void; onCategory: (category: Category, value?: string) => void; onOpen: (item: Saying) => void; saved: string[]; toggle: (id: string) => void; searchEngine: SearchEngine
+function HomeView({ onBrowse, onCategory, onOpen, saved, toggle }: {
+  onBrowse: () => void; onCategory: (category: Category, value?: string) => void; onOpen: (item: Saying) => void; saved: string[]; toggle: (id: string) => void
 }) {
   const featured = sayings.find((item) => item.id === 'john-8-12-1') ?? sayings[0]
   const timelineIds = ['matthew-4-19-1', 'john-13-34-1', 'acts-1-8-1', 'revelation-22-20-1']
@@ -219,7 +206,7 @@ function HomeView({ onBrowse, onCategory, onOpen, saved, toggle, searchEngine }:
         <h1>Walk through the<br /><em>words of Yeshua.</em></h1>
         <p>Explore the recorded words of Jesus—from his earthly ministry to the risen Christ’s guidance and promised return—organized by event, theme, person, place, and time.</p>
         <button className="primary-button" onClick={onBrowse}>Begin exploring <ArrowRight size={18} /></button>
-        <div className="source-note"><BookOpen size={15} /> {catalogueMeta.abbreviation} · {catalogueMeta.speechUnits.toLocaleString()} locally generated speech units</div>
+        <div className="source-note"><BookOpen size={15} /> {catalogueMeta.abbreviation} · Read in scriptural context</div>
       </div>
       <div className="hero-art" aria-hidden="true">
         <div className="sun" /><div className="arch arch-one" /><div className="arch arch-two" />
@@ -254,8 +241,7 @@ function HomeView({ onBrowse, onCategory, onOpen, saved, toggle, searchEngine }:
       </button>)}</div>
     </section>
     <footer><div className="section-wrap footer-inner"><div><span className="brand-mark"><img src={brandLogo} alt="" /></span><strong>Words of Yeshua</strong></div>
-      <div className={`engine-status ${searchEngine}`}><span />{searchEngine === 'native' ? 'C++ search ready' : searchEngine === 'fallback' ? 'Safe search fallback' : 'Browser preview'}</div>
-      <p>A Christ-centered study companion generated from the local KJV, speaker, topic, cross-reference, Strong’s, N1904, and Vine’s datasets.</p></div></footer>
+      <p>A Christ-centered Bible reader for exploring the words of Yeshua in their scriptural context.</p></div></footer>
   </>
 }
 

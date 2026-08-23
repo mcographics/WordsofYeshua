@@ -11,6 +11,13 @@ describe('Words of Yeshua', () => {
     delete window.wordsOfYeshua
   })
 
+  it('keeps implementation details out of the reader interface', () => {
+    render(<App />)
+
+    expect(document.body).not.toHaveTextContent(/C\+\+ search ready|safe search fallback|browser preview|locally generated speech units|datasets/i)
+    expect(screen.getByText(/KJV · Read in scriptural context/i)).toBeInTheDocument()
+  })
+
   it('opens a saying and shows its structured context', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: /read in context/i }))

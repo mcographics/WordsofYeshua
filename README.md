@@ -6,7 +6,7 @@ The application does not require an account, subscription, cloud database, or in
 
 ## Current release
 
-The current release is **0.5.0**.
+The current release is **0.5.1**.
 
 - [GitHub releases](https://github.com/mcographics/WordsofYeshua/releases)
 - Windows architecture: x64
@@ -166,9 +166,10 @@ Assets/icon.ico
 Assets/logo.png
 ```
 
-- `logo.png` is used inside the React interface.
-- `icon.png` is the source artwork for the Windows icon set.
+- `logo.png` is the optimized transparent logo used inside the React interface; it is derived from `logo_upscaled.png`.
+- `icon.png` is the full-resolution transparent source artwork for the Windows icon set; it is derived from `icon_upscaled.png`.
 - `icon.ico` is embedded into the executable, Electron window, taskbar identity, NSIS installer, uninstaller, and shortcuts.
+- `public/icon-192.png` and `public/icon-512.png` provide the same icon artwork to the browser favicon and web-app manifest.
 
 Regenerate the multi-resolution ICO after replacing `Assets/icon.png`:
 
