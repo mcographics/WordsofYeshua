@@ -15,6 +15,7 @@ export interface AppSettings {
   compactCards: boolean
   showFullVerse: boolean
   showOriginalTerms: boolean
+  wordsOfChristInRed: boolean
   reduceMotion: boolean
 }
 
@@ -30,6 +31,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = Object.freeze({
   compactCards: false,
   showFullVerse: true,
   showOriginalTerms: true,
+  wordsOfChristInRed: true,
   reduceMotion: false,
 })
 
@@ -68,6 +70,7 @@ export function sanitizeAppSettings(value: unknown): AppSettings {
     compactCards: booleanValue(source.compactCards, DEFAULT_APP_SETTINGS.compactCards),
     showFullVerse: booleanValue(source.showFullVerse, DEFAULT_APP_SETTINGS.showFullVerse),
     showOriginalTerms: booleanValue(source.showOriginalTerms, DEFAULT_APP_SETTINGS.showOriginalTerms),
+    wordsOfChristInRed: booleanValue(source.wordsOfChristInRed, DEFAULT_APP_SETTINGS.wordsOfChristInRed),
     reduceMotion: booleanValue(source.reduceMotion, DEFAULT_APP_SETTINGS.reduceMotion),
   }
 }

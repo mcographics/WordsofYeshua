@@ -169,7 +169,7 @@ export default function App() {
         )}
       </main>
       <MobileNav view={view} count={saved.length} navigate={navigate} />
-      {chapter && <ChapterReader book={chapter.book} chapter={chapter.number} onClose={() => setChapter(null)} onOpenSaying={setSelected} onNavigate={(next) => setChapter(next)} />}
+      {chapter && <ChapterReader book={chapter.book} chapter={chapter.number} onClose={() => setChapter(null)} onOpenSaying={setSelected} onNavigate={(next) => setChapter(next)} wordsOfChristInRed={settings.wordsOfChristInRed} />}
       {selected && <DetailSheet saying={selected} saved={saved.includes(selected.id)} onToggle={() => toggle(selected.id)} onClose={() => setSelected(null)} settings={settings}
         onReadChapter={() => { setSelected(null); setChapter({ book: selected.book, number: selected.chapter }) }}
         onTag={(category, value) => { setSelected(null); browseCategory(category, value) }} />}
@@ -303,6 +303,8 @@ function SettingsView({ settings, updateSetting, resetSettings }: {
           onChange={(checked) => updateSetting('showFullVerse', checked)} />
         <SettingSwitch icon={Eye} label="Show Greek and Strong’s" description="Includes original-language lemmas, transliterations, glosses, and Vine’s links." checked={settings.showOriginalTerms}
           onChange={(checked) => updateSetting('showOriginalTerms', checked)} />
+        <SettingSwitch icon={Sparkles} label="Words of Christ in red" description="Uses a restrained red accent for Words of Yeshua passages in Read Chapter Mode." checked={settings.wordsOfChristInRed}
+          onChange={(checked) => updateSetting('wordsOfChristInRed', checked)} />
       </SettingsGroup>
 
       <SettingsGroup icon={Gauge} title="Comfort and startup" description="Reduce movement and choose where the app opens next time.">
@@ -418,7 +420,7 @@ function DetailSheet({ saying, saved, onToggle, onClose, onTag, onReadChapter, s
   </div>
 }
 
-function ChapterReader({ book, chapter, onClose, onOpenSaying, onNavigate }: { book: Saying['book']; chapter: number; onClose: () => void; onOpenSaying: (saying: Saying) => void; onNavigate: (chapter: { book: Saying['book']; number: number }) => void }) {
+function ChapterReader({ book, chapter, onClose, onOpenSaying, onNavigate, wordsOfChristInRed }: { book: Saying['book']; chapter: number; onClose: () => void; onOpenSaying: (saying: Saying) => void; onNavigate: (chapter: { book: Saying['book']; number: number }) => void; wordsOfChristInRed: boolean }) {
   const chapters = [...new Set(sayings.map((item) => `${item.book}|${item.chapter}`))].map((key) => { const [chapterBook, chapterNumber] = key.split('|'); return { book: chapterBook as Saying['book'], number: Number(chapterNumber) } }).sort((a, b) => sayings.find((item) => item.book === a.book && item.chapter === a.number)!.sortOrder - sayings.find((item) => item.book === b.book && item.chapter === b.number)!.sortOrder)
   const index = chapters.findIndex((item) => item.book === book && item.number === chapter)
   const current = chapters[index]
@@ -427,7 +429,7 @@ function ChapterReader({ book, chapter, onClose, onOpenSaying, onNavigate }: { b
   return <div className="chapter-backdrop"><article className="chapter-reader" role="dialog" aria-modal="true" aria-labelledby="chapter-title">
     <header className="chapter-header"><button className="sheet-close" onClick={onClose} aria-label="Close chapter reader"><ArrowLeft size={21} /></button><span>Read Chapter Mode</span><button className="sheet-close" onClick={onClose} aria-label="Close"><X size={19} /></button></header>
     <div className="chapter-intro"><span className="eyebrow">Complete chapter · KJV</span><h1 id="chapter-title">{current.book} <em>{current.number}</em></h1><p>Read the complete chapter from the local King James Version. Words of Yeshua passages are marked within the chapter and can be opened for their full study context.</p></div>
-    <main className="chapter-content"><div className="chapter-bible-text">{entries.map((item) => { const saying = speechByVerse.get(item.verse); return <span className={saying ? 'bible-verse speech-verse' : 'bible-verse'} key={`${item.book}-${item.chapter}-${item.verse}`}><sup>{item.verse}</sup>{saying ? <button className="bible-speech" onClick={() => onOpenSaying(saying)} title={`Open study context for ${saying.reference}`}>{item.text}</button> : item.text} </span> })}</div><p className="chapter-reader-note">Highlighted words open their full study context.</p></main>
+    <main className="chapter-content"><div className="chapter-bible-text">{entries.map((item) => { const saying = speechByVerse.get(item.verse); return <span className={saying ? 'bible-verse speech-verse' : 'bible-verse'} key={`${item.book}-${item.chapter}-${item.verse}`}><sup>{item.verse}</sup>{saying ? <button className={wordsOfChristInRed ? 'bible-speech red-words' : 'bible-speech'} onClick={() => onOpenSaying(saying)} title={`Open study context for ${saying.reference}`}>{item.text}</button> : item.text} </span> })}</div><p className="chapter-reader-note">Highlighted words open their full study context.</p></main>
     <footer className="chapter-footer"><button className="outline-button" disabled={index <= 0} onClick={() => { const previous = chapters[index - 1]; if (previous) onNavigate(previous) }}>Previous chapter</button><span>{index + 1} of {chapters.length} catalogued chapters</span><button className="outline-button" disabled={index < 0 || index >= chapters.length - 1} onClick={() => { const next = chapters[index + 1]; if (next) onNavigate(next) }}>Next chapter</button></footer>
   </article></div>
 }

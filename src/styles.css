@@ -237,6 +237,7 @@ footer { background: #e8ecef; border-top: 1px solid var(--line); } .footer-inner
 .bible-verse { display: inline; }
 .bible-verse sup { color: var(--clay); font: 700 10px ui-sans-serif, system-ui, sans-serif; margin: 0 4px 0 1px; vertical-align: super; }
 .bible-speech { border: 0; border-bottom: 2px solid rgba(196,154,54,.58); padding: 0 2px; background: rgba(196,154,54,.12); color: inherit; font: inherit; line-height: inherit; cursor: pointer; }
+.bible-speech.red-words { color: #a33131; border-bottom-color: rgba(163,49,49,.42); background: rgba(163,49,49,.08); }
 .chapter-reader-note { max-width: 720px; margin: 28px auto 0; color: var(--soft); font-size: 10px; text-align: center; }
 .chapter-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 22px 55px 55px; color: var(--soft); font-size: 10px; }
 .chapter-footer .outline-button { margin: 0; }
