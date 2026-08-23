@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { DEFAULT_APP_SETTINGS, SETTINGS_STORAGE_KEY } from './settings'
+import { sayings } from '../data/words-of-yeshua/sayings'
 
 describe('Words of Yeshua', () => {
   beforeEach(() => localStorage.clear())
@@ -55,7 +56,7 @@ describe('Words of Yeshua', () => {
     fireEvent.change(screen.getByPlaceholderText(/search words/i), { target: { value: 'zzzz-no-match' } })
     expect(document.querySelector('.results-heading')).toHaveTextContent('0 passages')
     fireEvent.click(screen.getByRole('button', { name: /clear search/i }))
-    expect(document.querySelector('.results-heading')).toHaveTextContent('2171 passages')
+    expect(document.querySelector('.results-heading')).toHaveTextContent(`${sayings.length} passages`)
   })
 
   it('puts an exact Bible reference first in the results', () => {

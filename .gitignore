@@ -1,5 +1,7 @@
 node_modules/
 dist/
+/out/
+/releases/
 native/build/
 
 # Local reference library: retained on development machines, not part of the

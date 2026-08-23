@@ -3,6 +3,7 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses')
 const { FusesPlugin } = require('@electron-forge/plugin-fuses')
 
 module.exports = {
+  outDir: 'releases',
   packagerConfig: {
     asar: true,
     executableName: 'WordsOfYeshua',

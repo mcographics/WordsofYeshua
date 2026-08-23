@@ -25,7 +25,7 @@
     "native:smoke": "node scripts/launch-electron.cjs electron/native-smoke.cjs",
     "electron:smoke": "cross-env WOY_ELECTRON_SMOKE=1 node scripts/launch-electron.cjs .",
     "package": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build && cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64 && electron-forge package",
-    "make": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build && cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64 && electron-forge make"
+    "make": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build && cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64 && node scripts/prepare-windows-installer.cjs && electron-forge make"
   },
   "dependencies": {
     "electron-squirrel-startup": "1.0.1",
