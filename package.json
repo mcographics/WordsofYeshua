@@ -1,7 +1,7 @@
 {
   "name": "words-of-yeshua",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Christ-centered desktop study companion for exploring the words of Yeshua in Gospel context.",
   "main": "electron/main.cjs",
   "author": "Words of Yeshua",
