@@ -27,6 +27,30 @@ function readStrongJson(file) {
   }
 }
 
+function loadSpeakerMap(verses) {
+  const sourcePath = path.join(dataRoot, 'speaker_segments', 'kjv_speaker_map.json')
+  if (fs.existsSync(sourcePath)) return readJson(sourcePath)
+
+  // The old speaker_segments folder was copied from another Bible project and
+  // is not a Words of Yeshua source. When it is absent, preserve the current
+  // local catalogue by rebuilding ranges from its own reviewed speech units.
+  const cataloguePath = path.join(dataRoot, 'words-of-yeshua', 'generated-catalogue.json')
+  if (!fs.existsSync(cataloguePath)) throw new Error(`Missing local Words of Yeshua catalogue: ${cataloguePath}`)
+  const catalogue = readJson(cataloguePath)
+  const divine = {}
+  for (const saying of catalogue.sayings ?? []) {
+    const key = `${saying.book}|${saying.chapter}|${saying.verse}`
+    const source = verses.get(key)?.text ?? saying.verseText
+    if (!source) continue
+    const quote = String(saying.quote ?? '').trim()
+    const start = quote ? source.indexOf(quote) : -1
+    const ranges = divine[key] ?? []
+    ranges.push(start >= 0 ? [start, start + quote.length] : [0, source.length])
+    divine[key] = ranges
+  }
+  return { source: 'data/words-of-yeshua/generated-catalogue.json', divine }
+}
+
 function decodeXml(value) {
   return value
     .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
@@ -107,7 +131,9 @@ function formatOsis(value) {
 
 function buildTopicIndex(verses) {
   const topics = new Map()
-  const lines = fs.readFileSync(path.join(dataRoot, 'topic-scores', 'topic-scores.txt'), 'utf8').split(/\r?\n/).slice(1)
+  const topicPath = path.join(dataRoot, 'topic-scores', 'topic-scores.txt')
+  if (!fs.existsSync(topicPath)) return topics
+  const lines = fs.readFileSync(topicPath, 'utf8').split(/\r?\n/).slice(1)
   for (const line of lines) {
     if (!line) continue
     const [topic, osis, scoreText] = line.split('\t')
@@ -333,7 +359,7 @@ function originalTermsFor(key, strongVerses, lexical) {
 
 function main() {
   const verses = parseKjvDocx()
-  const speakerMap = readJson(path.join(dataRoot, 'speaker_segments', 'kjv_speaker_map.json'))
+  const speakerMap = loadSpeakerMap(verses)
   const overrides = readJson(path.join(dataRoot, 'words-of-yeshua', 'speaker-overrides.json'))
   const excluded = new Set(overrides.excludedReferences)
   const includedPostGospel = expandIncludedReferences(overrides.includedPostGospelReferences)
@@ -413,7 +439,7 @@ function main() {
       rejectedNonSpeechSpans: rejectedSourceSpans.length, documentedExcludedReferences: excluded.size,
       documentedPostGospelInclusions: includedPostGospel.size,
       sources: [
-        'data/translations/kjv.docx', 'data/speaker_segments/kjv_speaker_map.json',
+        'data/translations/kjv.docx', 'data/words-of-yeshua/generated-catalogue.json',
         'data/topic-scores/topic-scores.txt', 'data/cross-references/cross_references.txt',
         'data/strongs/kjv-HG num/*.json', 'data/strongs/strongs_n1904_word_alignment.json', 'data/vines/vines_entries.json',
       ],
