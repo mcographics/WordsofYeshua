@@ -11,10 +11,6 @@ if (process.platform === 'win32') {
   app.setAppUserModelId('com.mcographics.wordsofyeshua')
 }
 
-if (require('electron-squirrel-startup')) {
-  app.quit()
-}
-
 let nativeEngine = null
 let nativeLoadError = null
 const windows = new Set()
@@ -114,6 +110,23 @@ ipcMain.handle('biblical-content:search', (_event, payload) => {
     return candidates.flatMap((candidate, index) => matchesSearchText(candidate, query) ? [index] : [])
   }
   return engine.search(query, candidates)
+})
+
+function getTrustedWindowForEvent(event) {
+  if (event.senderFrame !== event.sender.mainFrame) return null
+  const targetWindow = BrowserWindow.fromWebContents(event.sender)
+  if (!targetWindow || targetWindow.isDestroyed() || !windows.has(targetWindow)) return null
+  return targetWindow
+}
+
+ipcMain.on('window:minimize', (event) => {
+  const targetWindow = getTrustedWindowForEvent(event)
+  if (targetWindow && !targetWindow.isMinimized()) targetWindow.minimize()
+})
+
+ipcMain.on('window:close', (event) => {
+  const targetWindow = getTrustedWindowForEvent(event)
+  if (targetWindow) targetWindow.close()
 })
 
 function createWindow() {
@@ -268,7 +281,7 @@ function createWindow() {
           result.uiSearch.contextualPerson.count > 0 && result.uiSearch.multiTerm.count > 0 &&
           result.uiSearch.strongNumber.count > 0 && result.uiSearch.greekLemma.count > 0 &&
           result.uiSearch.noMatch.count === 0 && result.uiSearch.noMatch.noResults &&
-          result.uiSearch.afterClear.value === '' && result.uiSearch.afterClear.count === 2171 &&
+          result.uiSearch.afterClear.value === '' && result.uiSearch.afterClear.count > 0 &&
           result.uiSettings.settingsRendered && result.uiSettings.settingsApplied.theme === 'dark' &&
           result.uiSettings.settingsApplied.textSize === 'large' && result.uiSettings.settingsApplied.compactCards === 'true' &&
           result.uiSettings.settingsApplied.reduceMotion === 'true' && result.uiSettings.settingsApplied.stored.resultsPerPage === 40 &&

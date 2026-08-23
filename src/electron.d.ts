@@ -11,6 +11,8 @@ interface WordsOfYeshuaBridge {
   readonly runtime: 'electron'
   getNativeHealth: () => Promise<NativeEngineHealth>
   searchBiblicalContent: (query: string, candidates: string[]) => Promise<number[]>
+  minimizeWindow: () => void
+  closeWindow: () => void
 }
 
 interface Window {

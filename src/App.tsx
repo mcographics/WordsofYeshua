@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft, ArrowRight, Bookmark, BookOpen, CalendarDays, ChevronRight, CircleUserRound,
   Compass, Eye, FileText, Gauge, Heart, Home, Languages, Landmark, LayoutGrid, MapPin, Menu,
-  Moon, RotateCcw, Search, Settings, Sparkles, Sun, Tag, Type, UsersRound, X,
+  Minus, Moon, RotateCcw, Search, Settings, Sparkles, Sun, Tag, Type, UsersRound, X,
 } from 'lucide-react'
 import brandLogo from '../Assets/logo.png'
 import { bibleVerses, catalogueMeta, categoryValues, sayings } from '../data/words-of-yeshua/sayings'
@@ -187,12 +187,18 @@ function Header({ view, count, menuOpen, setMenuOpen, navigate }: {
         <span className="brand-mark"><img src={brandLogo} alt="" /></span>
         <span><strong>Words of</strong><em>Yeshua</em></span>
       </button>
-      <nav className="desktop-nav" aria-label="Main navigation">
-        {(['home', 'library', 'saved', 'settings'] as View[]).map((item) => <button key={item} className={view === item ? 'active' : ''} onClick={() => navigate(item)}>
-          {item === 'library' ? 'Explore' : item[0].toUpperCase() + item.slice(1)}{item === 'saved' && count > 0 && <span>{count}</span>}
-        </button>)}
-      </nav>
-      <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label="Open navigation">{menuOpen ? <X /> : <Menu />}</button>
+      <div className="header-actions">
+        <nav className="desktop-nav" aria-label="Main navigation">
+          {(['home', 'library', 'saved', 'settings'] as View[]).map((item) => <button key={item} className={view === item ? 'active' : ''} onClick={() => navigate(item)}>
+            {item === 'library' ? 'Explore' : item[0].toUpperCase() + item.slice(1)}{item === 'saved' && count > 0 && <span>{count}</span>}
+          </button>)}
+        </nav>
+        {window.wordsOfYeshua?.runtime === 'electron' && <div className="window-controls" aria-label="Window controls">
+          <button type="button" onClick={() => window.wordsOfYeshua?.minimizeWindow()} aria-label="Minimize window"><Minus size={17} strokeWidth={2.2} /></button>
+          <button type="button" className="window-close" onClick={() => window.wordsOfYeshua?.closeWindow()} aria-label="Close window"><X size={16} strokeWidth={2.2} /></button>
+        </div>}
+        <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label="Open navigation">{menuOpen ? <X /> : <Menu />}</button>
+      </div>
       {menuOpen && <div className="menu-popover">
         <button onClick={() => navigate('home')}>Home</button><button onClick={() => navigate('library')}>Explore</button><button onClick={() => navigate('saved')}>Saved <span>{count}</span></button><button onClick={() => navigate('settings')}>Settings</button>
       </div>}

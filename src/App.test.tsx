@@ -126,6 +126,8 @@ describe('Words of Yeshua', () => {
       runtime: 'electron',
       getNativeHealth: vi.fn().mockResolvedValue({ ok: true, engine: 'words-of-yeshua-native' }),
       searchBiblicalContent,
+      minimizeWindow: vi.fn(),
+      closeWindow: vi.fn(),
     }
 
     render(<App />)
@@ -137,6 +139,25 @@ describe('Words of Yeshua', () => {
     const [query, candidates] = searchBiblicalContent.mock.calls[0] as [string, string[]]
     expect(query).toBe('native only query')
     expect(candidates[0]).toContain('suffer it to be so now')
+  })
+
+  it('connects the frameless window controls to the Electron bridge', () => {
+    const minimizeWindow = vi.fn()
+    const closeWindow = vi.fn()
+    window.wordsOfYeshua = {
+      runtime: 'electron',
+      getNativeHealth: vi.fn().mockResolvedValue({ ok: true, engine: 'words-of-yeshua-native' }),
+      searchBiblicalContent: vi.fn().mockResolvedValue([]),
+      minimizeWindow,
+      closeWindow,
+    }
+
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /minimize window/i }))
+    fireEvent.click(screen.getByRole('button', { name: /close window/i }))
+
+    expect(minimizeWindow).toHaveBeenCalledOnce()
+    expect(closeWindow).toHaveBeenCalledOnce()
   })
 
   it('applies and persists appearance settings immediately', () => {

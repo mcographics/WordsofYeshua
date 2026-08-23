@@ -1,8 +1,8 @@
 {
   "name": "words-of-yeshua",
   "private": true,
-  "version": "0.1.1",
-  "description": "A Christ-centered desktop study companion for exploring the words of Yeshua in Gospel context.",
+  "version": "0.1.2",
+  "description": "A Christ-centred, local-first Bible reader and study companion for exploring the words of Yeshua in scriptural context.",
   "main": "electron/main.cjs",
   "author": "Words of Yeshua",
   "engines": {
@@ -18,28 +18,23 @@
     "dev:electron": "wait-on http://127.0.0.1:5173 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 node scripts/launch-electron.cjs .",
     "build": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "eslint src electron scripts data/words-of-yeshua vite.config.ts forge.config.cjs eslint.config.js",
+    "lint": "eslint src electron scripts data/words-of-yeshua vite.config.ts electron-builder.config.cjs eslint.config.js",
     "test": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && vitest run",
     "native:configure": "cmake-js configure --directory native --runtime electron --runtime-version 43.3.0 --arch x64",
     "native:build": "cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64",
     "native:smoke": "node scripts/launch-electron.cjs electron/native-smoke.cjs",
     "electron:smoke": "cross-env WOY_ELECTRON_SMOKE=1 node scripts/launch-electron.cjs .",
     "icon:build": "node scripts/generate-windows-icon.cjs",
-    "package": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build && cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64 && electron-forge package",
-    "make": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build && cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64 && node scripts/prepare-windows-installer.cjs && electron-forge make"
+    "package": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build && cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64 && electron-builder --config electron-builder.config.cjs --dir --win",
+    "make": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build && cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64 && electron-builder --config electron-builder.config.cjs --win nsis",
+    "make:portable": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build && cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64 && electron-builder --config electron-builder.config.cjs --win zip"
   },
   "dependencies": {
-    "electron-squirrel-startup": "1.0.1",
     "lucide-react": "0.468.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@electron-forge/cli": "7.11.2",
-    "@electron-forge/maker-squirrel": "7.11.2",
-    "@electron-forge/maker-zip": "7.11.2",
-    "@electron-forge/plugin-fuses": "7.11.2",
-    "@electron/fuses": "1.8.0",
     "@eslint/js": "9.39.5",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.1.0",
@@ -52,6 +47,7 @@
     "concurrently": "9.2.4",
     "cross-env": "7.0.3",
     "electron": "43.3.0",
+    "electron-builder": "^26.15.3",
     "eslint": "9.39.5",
     "eslint-plugin-react-hooks": "5.1.0",
     "eslint-plugin-react-refresh": "0.4.16",
@@ -70,7 +66,6 @@
     "tmp": "0.2.7"
   },
   "allowScripts": {
-    "esbuild@0.25.12": true,
-    "electron-winstaller@5.4.4": true
+    "esbuild@0.25.12": true
   }
 }

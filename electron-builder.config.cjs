@@ -1,0 +1,57 @@
+module.exports = {
+  appId: 'com.mcographics.wordsofyeshua',
+  productName: 'Words of Yeshua',
+  executableName: 'WordsOfYeshua',
+  asar: true,
+  compression: 'normal',
+  npmRebuild: false,
+  directories: {
+    output: 'releases/nsis',
+    buildResources: 'Assets',
+  },
+  files: [
+    'dist/**/*',
+    'electron/**/*',
+    'package.json',
+    '!electron/native-smoke.cjs',
+  ],
+  extraResources: [
+    {
+      from: 'native/build/Release/words_of_yeshua_native.node',
+      to: 'words_of_yeshua_native.node',
+    },
+    {
+      from: 'Assets/icon.ico',
+      to: 'icon.ico',
+    },
+  ],
+  electronFuses: {
+    runAsNode: false,
+    enableCookieEncryption: true,
+    enableNodeOptionsEnvironmentVariable: false,
+    enableNodeCliInspectArguments: false,
+    enableEmbeddedAsarIntegrityValidation: true,
+    onlyLoadAppFromAsar: true,
+    loadBrowserProcessSpecificV8Snapshot: false,
+    grantFileProtocolExtraPrivileges: false,
+  },
+  win: {
+    icon: 'Assets/icon.ico',
+    target: [{ target: 'nsis', arch: ['x64'] }],
+    artifactName: 'Words-of-Yeshua-${version}-${arch}.${ext}',
+  },
+  nsis: {
+    artifactName: 'Words-of-Yeshua-Setup-${version}.${ext}',
+    oneClick: false,
+    perMachine: false,
+    allowElevation: true,
+    allowToChangeInstallationDirectory: true,
+    createDesktopShortcut: true,
+    createStartMenuShortcut: true,
+    shortcutName: 'Words of Yeshua',
+    installerIcon: 'Assets/icon.ico',
+    uninstallerIcon: 'Assets/icon.ico',
+    installerHeaderIcon: 'Assets/icon.ico',
+    deleteAppDataOnUninstall: false,
+  },
+}
