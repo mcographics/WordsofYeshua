@@ -6,7 +6,7 @@ The application does not require an account, subscription, cloud database, or in
 
 ## Current release
 
-The current source version is **0.1.2**.
+The current release is **0.5.0**.
 
 - [GitHub releases](https://github.com/mcographics/WordsofYeshua/releases)
 - Windows architecture: x64
