@@ -47,19 +47,19 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(196,154,54,.
 .primary-button:active { transform: translateY(3px); box-shadow: 0 2px 0 #050607; }
 .source-note { margin-top: 21px; display: flex; align-items: center; gap: 7px; color: #68737c; font-size: 11px; }
 
-.hero-art { height: 450px; background: #9aaab6; border-radius: 180px 180px 26px 26px; position: relative; overflow: hidden; isolation: isolate; box-shadow: 12px 14px 0 rgba(17,19,21,.1); }
-.hero-art::after { content: ""; position: absolute; inset: 14px; border: 1px solid rgba(255,255,255,.42); border-radius: 165px 165px 18px 18px; z-index: 10; }
-.sun { position: absolute; width: 96px; height: 96px; left: 54%; top: 16%; background: #e4c76f; border-radius: 50%; box-shadow: 0 0 0 14px rgba(228,199,111,.18), 0 0 0 30px rgba(228,199,111,.09); }
-.arch { position: absolute; bottom: 0; } .arch-one { width: 41%; height: 76%; left: -8%; border-radius: 0 170px 0 0; transform: skewX(-6deg); background: #171a1d; }
-.arch-two { width: 30%; height: 60%; right: -9%; border-radius: 150px 0 0 0; transform: skewX(5deg); background: #b38b2e; }
-.horizon { position: absolute; left: -10%; width: 120%; border-radius: 50% 50% 0 0; }
-.hill-one { height: 42%; bottom: -18%; background: #748591; transform: rotate(4deg); } .hill-two { height: 31%; bottom: -16%; left: 6%; background: #4f616d; transform: rotate(-5deg); }
-.path { position: absolute; width: 110px; height: 250px; background: #d8dce0; bottom: -118px; left: 42%; border-radius: 50%; transform: rotate(8deg); }
-.figure { position: absolute; width: 40px; height: 118px; bottom: 64px; left: 49%; z-index: 6; }
-.figure span { display: block; margin: auto; width: 27px; height: 27px; background: #101214; border-radius: 50%; }
-.figure i { display: block; width: 36px; height: 82px; margin: -2px auto 0; background: #101214; border-radius: 16px 16px 5px 5px; clip-path: polygon(32% 0,70% 0,100% 100%,0 100%); }
-.art-caption { position: absolute; z-index: 12; top: 58px; left: 35px; display: flex; flex-direction: column; color: #ffffff; }
+.hero-art { height: 450px; border-radius: 180px 180px 26px 26px; position: relative; overflow: hidden; isolation: isolate; background: #111820; box-shadow: 12px 14px 0 rgba(17,19,21,.1); }
+.hero-art::after { content: ""; position: absolute; inset: 14px; border: 1px solid rgba(255,255,255,.46); border-radius: 165px 165px 18px 18px; z-index: 5; pointer-events: none; }
+.hero-gallery, .hero-gallery img, .hero-gradient { position: absolute; inset: 0; }
+.hero-gallery { background: #111820; }
+.hero-gallery img { width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0; transform: scale(1); filter: saturate(.9) contrast(1.04); transition: opacity 1.15s ease-in-out, transform 6.5s ease-out, filter 1.15s ease-in-out; will-change: opacity, transform; }
+.hero-gallery img.is-active { opacity: 1; transform: scale(1.055); filter: saturate(1.03) contrast(1.06); }
+.hero-gradient { z-index: 2; pointer-events: none; background: linear-gradient(145deg, rgba(7,14,23,.58) 0%, rgba(7,14,23,.2) 40%, rgba(228,183,79,.13) 100%), linear-gradient(0deg, rgba(8,12,17,.68) 0%, transparent 48%); }
+.art-caption { position: absolute; z-index: 6; top: 58px; left: 55px; display: flex; flex-direction: column; color: #ffffff; text-shadow: 0 2px 18px rgba(0,0,0,.72); }
 .art-caption span { text-transform: uppercase; letter-spacing: .18em; font-size: 8px; font-weight: 800; margin-bottom: 6px; } .art-caption strong { font: 400 18px/1.15 var(--serif); }
+.hero-gallery-progress { position: absolute; z-index: 6; right: 36px; bottom: 34px; display: flex; align-items: center; gap: 5px; }
+.hero-gallery-progress i { display: block; width: 14px; height: 2px; border-radius: 99px; background: rgba(255,255,255,.45); transition: width .45s ease, background .45s ease; }
+.hero-gallery-progress i.is-active { width: 28px; background: #f6df94; }
+@media (prefers-reduced-motion: reduce) { .hero-gallery img, .hero-gallery-progress i { transition: none; } }
 
 .browse-section, .journey-section { padding-block: 88px; }
 .section-heading { display: flex; justify-content: space-between; align-items: end; margin-bottom: 30px; }

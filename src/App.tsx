@@ -5,6 +5,13 @@ import {
   Minus, Moon, RotateCcw, Search, Settings, Sparkles, Sun, Tag, Type, UsersRound, X,
 } from 'lucide-react'
 import brandLogo from '../Assets/logo.png'
+import stainedGlassTruth from '../Assets/upscaled/689ba15a-2da2-4439-8729-a34045d248b8_01_upscaled.png'
+import stainedGlassFinished from '../Assets/upscaled/689ba15a-2da2-4439-8729-a34045d248b8_03_upscaled.png'
+import stainedGlassShepherd from '../Assets/upscaled/689ba15a-2da2-4439-8729-a34045d248b8_04_upscaled.png'
+import stainedGlassLamp from '../Assets/upscaled/689ba15a-2da2-4439-8729-a34045d248b8_05_upscaled.png'
+import stainedGlassIAm from '../Assets/upscaled/689ba15a-2da2-4439-8729-a34045d248b8_06_upscaled.png'
+import stainedGlassPeace from '../Assets/upscaled/689ba15a-2da2-4439-8729-a34045d248b8_07_upscaled.png'
+import stainedGlassKing from '../Assets/upscaled/689ba15a-2da2-4439-8729-a34045d248b8_09_upscaled.png'
 import { bibleVerses, catalogueMeta, categoryValues, sayings } from '../data/words-of-yeshua/sayings'
 import type { Category, Saying } from './types'
 import { normalizeSearchText, scoreSearchText } from './search'
@@ -24,6 +31,16 @@ const categoryMeta: Record<Category, { note: string; icon: typeof CalendarDays; 
   Timeline: { note: 'When it happened', icon: Compass, color: 'sand' },
 }
 const categories = Object.keys(categoryMeta) as Category[]
+
+const heroSlides = [
+  { src: stainedGlassTruth, label: 'Thy Word Is Truth' },
+  { src: stainedGlassFinished, label: 'It Is Finished' },
+  { src: stainedGlassShepherd, label: 'The Lord Is My Shepherd' },
+  { src: stainedGlassLamp, label: 'Thy Word Is a Lamp' },
+  { src: stainedGlassIAm, label: 'I Am That I Am' },
+  { src: stainedGlassPeace, label: 'Peace, Be Still' },
+  { src: stainedGlassKing, label: 'King of Kings, Lord of Lords' },
+]
 
 function searchableText(item: Saying) {
   return [item.title, item.quote, item.reference, item.event, item.place, item.period, item.context,
@@ -208,11 +225,7 @@ function HomeView({ onBrowse, onCategory, onOpen, saved, toggle }: {
         <button className="primary-button" onClick={onBrowse}>Begin exploring <ArrowRight size={18} /></button>
         <div className="source-note"><BookOpen size={15} /> {catalogueMeta.abbreviation} · Read in scriptural context</div>
       </div>
-      <div className="hero-art" aria-hidden="true">
-        <div className="sun" /><div className="arch arch-one" /><div className="arch arch-two" />
-        <div className="horizon hill-one" /><div className="horizon hill-two" /><div className="path" /><div className="figure"><span /><i /></div>
-        <div className="art-caption"><span>Explore the story</span><strong>From Galilee<br />to the New Jerusalem</strong></div>
-      </div>
+      <HeroGallery />
     </section>
 
     <section className="browse-section section-wrap">
@@ -243,6 +256,30 @@ function HomeView({ onBrowse, onCategory, onOpen, saved, toggle }: {
     <footer><div className="section-wrap footer-inner"><div><span className="brand-mark"><img src={brandLogo} alt="" /></span><strong>Words of Yeshua</strong></div>
       <p>A Christ-centered Bible reader for exploring the words of Yeshua in their scriptural context.</p></div></footer>
   </>
+}
+
+function HeroGallery() {
+  const [activeSlide, setActiveSlide] = useState(0)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setActiveSlide((current) => (current + 1) % heroSlides.length), 6500)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  return (
+    <div className="hero-art" aria-label="A rotating collection of stained-glass biblical artwork">
+      <div className="hero-gallery" aria-hidden="true">
+        {heroSlides.map((slide, index) => (
+          <img key={slide.src} className={index === activeSlide ? 'is-active' : ''} src={slide.src} alt="" />
+        ))}
+      </div>
+      <div className="hero-gradient" aria-hidden="true" />
+      <div className="art-caption"><span>Explore the story</span><strong>From Galilee<br />to the New Jerusalem</strong></div>
+      <div className="hero-gallery-progress" aria-hidden="true">
+        {heroSlides.map((slide, index) => <i key={slide.src} className={index === activeSlide ? 'is-active' : ''} />)}
+      </div>
+    </div>
+  )
 }
 
 function SectionHeading({ eyebrow, title, action, onClick }: { eyebrow: string; title: string; action: string; onClick: () => void }) {
