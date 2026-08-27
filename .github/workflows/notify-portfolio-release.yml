@@ -1,0 +1,14 @@
+name: Notify portfolio of release
+on:
+  release:
+    types: [published]
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request portfolio release sync
+        env:
+          PORTFOLIO_DISPATCH_TOKEN: ${{ secrets.PORTFOLIO_DISPATCH_TOKEN }}
+        run: |
+          test -n "$PORTFOLIO_DISPATCH_TOKEN"
+          curl --fail-with-body --request POST --url https://api.github.com/repos/mcographics/mcographics.github.io/dispatches --header "Accept: application/vnd.github+json" --header "Authorization: Bearer $PORTFOLIO_DISPATCH_TOKEN" --header "X-GitHub-Api-Version: 2022-11-28" --header "User-Agent: mcographics-release-notifier" --data '{"event_type":"portfolio-release"}'
