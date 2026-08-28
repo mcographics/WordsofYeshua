@@ -4,6 +4,8 @@ export type ScriptureFont = 'classic' | 'clean'
 export type ReadingWidth = 'focused' | 'comfortable' | 'wide'
 export type StartPage = 'home' | 'library' | 'saved'
 export type ResultsPerPage = 40 | 80 | 120
+export type DisplayScale = 80 | 90 | 100 | 110 | 125 | 150
+export type WindowResolution = 'auto' | '1280x720' | '1366x768' | '1600x900' | '1920x1080'
 
 export interface AppSettings {
   theme: AppTheme
@@ -12,6 +14,8 @@ export interface AppSettings {
   readingWidth: ReadingWidth
   startPage: StartPage
   resultsPerPage: ResultsPerPage
+  displayScale: DisplayScale
+  windowResolution: WindowResolution
   compactCards: boolean
   showFullVerse: boolean
   showOriginalTerms: boolean
@@ -28,6 +32,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = Object.freeze({
   readingWidth: 'comfortable',
   startPage: 'home',
   resultsPerPage: 80,
+  displayScale: 100,
+  windowResolution: 'auto',
   compactCards: false,
   showFullVerse: true,
   showOriginalTerms: true,
@@ -42,6 +48,8 @@ const allowedValues = {
   readingWidth: ['focused', 'comfortable', 'wide'],
   startPage: ['home', 'library', 'saved'],
   resultsPerPage: [40, 80, 120],
+  displayScale: [80, 90, 100, 110, 125, 150],
+  windowResolution: ['auto', '1280x720', '1366x768', '1600x900', '1920x1080'],
 } as const
 
 function allowed<T>(value: unknown, values: readonly T[], fallback: T): T {
@@ -67,6 +75,8 @@ export function sanitizeAppSettings(value: unknown): AppSettings {
     readingWidth: allowed(source.readingWidth, allowedValues.readingWidth, DEFAULT_APP_SETTINGS.readingWidth),
     startPage: allowed(source.startPage, allowedValues.startPage, DEFAULT_APP_SETTINGS.startPage),
     resultsPerPage: allowed(source.resultsPerPage, allowedValues.resultsPerPage, DEFAULT_APP_SETTINGS.resultsPerPage),
+    displayScale: allowed(source.displayScale, allowedValues.displayScale, DEFAULT_APP_SETTINGS.displayScale),
+    windowResolution: allowed(source.windowResolution, allowedValues.windowResolution, DEFAULT_APP_SETTINGS.windowResolution),
     compactCards: booleanValue(source.compactCards, DEFAULT_APP_SETTINGS.compactCards),
     showFullVerse: booleanValue(source.showFullVerse, DEFAULT_APP_SETTINGS.showFullVerse),
     showOriginalTerms: booleanValue(source.showOriginalTerms, DEFAULT_APP_SETTINGS.showOriginalTerms),
@@ -94,6 +104,9 @@ export function applyAppSettings(settings: AppSettings, root: HTMLElement = docu
   root.dataset.readingWidth = settings.readingWidth
   root.dataset.compactCards = String(settings.compactCards)
   root.dataset.reduceMotion = String(settings.reduceMotion)
+  root.dataset.displayScale = String(settings.displayScale)
+  root.dataset.windowResolution = settings.windowResolution
+  root.style.setProperty('--display-scale', String(settings.displayScale / 100))
 }
 
 export function clearAppliedAppSettings(root: HTMLElement = document.documentElement) {
@@ -103,4 +116,8 @@ export function clearAppliedAppSettings(root: HTMLElement = document.documentEle
   delete root.dataset.readingWidth
   delete root.dataset.compactCards
   delete root.dataset.reduceMotion
+  delete root.dataset.displayScale
+  delete root.dataset.windowResolution
+  delete root.dataset.nativeDisplay
+  root.style.removeProperty('--display-scale')
 }

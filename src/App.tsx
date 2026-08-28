@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft, ArrowRight, Bookmark, BookOpen, CalendarDays, ChevronRight, CircleUserRound,
   Compass, Eye, FileText, Gauge, Heart, Home, Languages, Landmark, LayoutGrid, MapPin, Menu,
-  Minus, Moon, RotateCcw, Search, Settings, Sparkles, Sun, Tag, Type, UsersRound, X,
+  Minus, Monitor, Moon, RotateCcw, Search, Settings, Sparkles, Sun, Tag, Type, UsersRound, X,
 } from 'lucide-react'
 import brandLogo from '../Assets/logo.png'
 import stainedGlassTruth from '../Assets/upscaled/689ba15a-2da2-4439-8729-a34045d248b8_01_upscaled.png'
@@ -87,6 +87,17 @@ export default function App() {
   useEffect(() => {
     saveAppSettings(settings)
     applyAppSettings(settings)
+    const bridge = window.wordsOfYeshua
+    const usesNativeDisplay = bridge?.runtime === 'electron'
+    document.documentElement.dataset.nativeDisplay = String(usesNativeDisplay)
+    bridge?.setDisplaySettings?.({ displayScale: settings.displayScale, windowResolution: settings.windowResolution })
+    if (!usesNativeDisplay && settings.windowResolution !== 'auto') {
+      const match = /^(\d+)x(\d+)$/.exec(settings.windowResolution)
+      const browserAllowsResize = typeof navigator === 'undefined' || !navigator.userAgent.toLowerCase().includes('jsdom')
+      if (match && browserAllowsResize && typeof window.resizeTo === 'function') {
+        try { window.resizeTo(Number(match[1]), Number(match[2])) } catch { /* Browser hosts may deny scripted resizing. */ }
+      }
+    }
     return () => clearAppliedAppSettings()
   }, [settings])
 
@@ -326,6 +337,15 @@ function SettingsView({ settings, updateSetting, resetSettings }: {
           onChange={(value) => updateSetting('resultsPerPage', value as ResultsPerPage)} />
         <SettingSwitch icon={Gauge} label="Compact passage cards" description="Shows shorter cards so more results fit on screen." checked={settings.compactCards}
           onChange={(checked) => updateSetting('compactCards', checked)} />
+      </SettingsGroup>
+
+      <SettingsGroup icon={Monitor} title="Display and window" description="Set a comfortable interface scale and preferred window size. These controls work in the desktop app and remain available in browser-based shells.">
+        <SegmentedSetting label="Display scale (DPI)" description="Scales the reading interface for high-DPI screens. 100% is the default size." value={settings.displayScale}
+          options={[80, 90, 100, 110, 125, 150].map((value) => ({ value, label: `${value}%` }))}
+          onChange={(value) => updateSetting('displayScale', value as AppSettings['displayScale'])} />
+        <SegmentedSetting label="Window resolution" description="Choose the preferred desktop window size. A browser may restrict script-controlled resizing." value={settings.windowResolution}
+          options={[{ value: 'auto', label: 'Auto' }, { value: '1280x720', label: '1280 × 720' }, { value: '1366x768', label: '1366 × 768' }, { value: '1600x900', label: '1600 × 900' }, { value: '1920x1080', label: '1920 × 1080' }]}
+          onChange={(value) => updateSetting('windowResolution', value as AppSettings['windowResolution'])} />
       </SettingsGroup>
 
       <SettingsGroup icon={Languages} title="Study details" description="Decide how much supporting material is shown in a passage’s context panel.">

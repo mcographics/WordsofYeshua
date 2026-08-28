@@ -129,6 +129,17 @@ ipcMain.on('window:close', (event) => {
   if (targetWindow) targetWindow.close()
 })
 
+ipcMain.on('window:display-settings', (event, settings) => {
+  const targetWindow = getTrustedWindowForEvent(event)
+  if (!targetWindow || !settings || typeof settings !== 'object') return
+  const scale = Number(settings.displayScale)
+  if (Number.isFinite(scale) && scale >= 80 && scale <= 150) targetWindow.webContents.setZoomFactor(scale / 100)
+  if (typeof settings.windowResolution === 'string' && settings.windowResolution !== 'auto') {
+    const match = /^(1280|1366|1600|1920)x(720|768|900|1080)$/.exec(settings.windowResolution)
+    if (match) targetWindow.setSize(Number(match[1]), Number(match[2]), true)
+  }
+})
+
 function createWindow() {
   const smokeTest = process.env.WOY_ELECTRON_SMOKE === '1'
   const smokeEvents = []
@@ -225,10 +236,12 @@ function createWindow() {
           }
           clickTextButton('.desktop-nav button', 'Settings')
           await wait(100)
-          const settingsRendered = document.querySelectorAll('.settings-group').length === 4
+          const settingsRendered = document.querySelectorAll('.settings-group').length === 5
           clickTextButton('.setting-options button', 'Dark')
           clickTextButton('.setting-options button', 'Large')
           clickTextButton('.setting-options button', '40')
+          clickTextButton('.setting-options button', '125%')
+          clickTextButton('.setting-options button', '1600 × 900')
           document.querySelector('[role="switch"][aria-label="Compact passage cards"]')?.click()
           document.querySelector('[role="switch"][aria-label="Show complete verse"]')?.click()
           document.querySelector('[role="switch"][aria-label="Show Greek and Strong’s"]')?.click()
@@ -239,6 +252,9 @@ function createWindow() {
             textSize: document.documentElement.dataset.textSize,
             compactCards: document.documentElement.dataset.compactCards,
             reduceMotion: document.documentElement.dataset.reduceMotion,
+            displayScale: document.documentElement.dataset.displayScale,
+            windowResolution: document.documentElement.dataset.windowResolution,
+            windowSize: { width: window.outerWidth, height: window.outerHeight },
             stored: JSON.parse(localStorage.getItem('woy-settings') || '{}')
           }
           clickTextButton('.desktop-nav button', 'Explore')
@@ -285,6 +301,9 @@ function createWindow() {
           result.uiSettings.settingsRendered && result.uiSettings.settingsApplied.theme === 'dark' &&
           result.uiSettings.settingsApplied.textSize === 'large' && result.uiSettings.settingsApplied.compactCards === 'true' &&
           result.uiSettings.settingsApplied.reduceMotion === 'true' && result.uiSettings.settingsApplied.stored.resultsPerPage === 40 &&
+          result.uiSettings.settingsApplied.displayScale === '125' && result.uiSettings.settingsApplied.windowResolution === '1600x900' &&
+          result.uiSettings.settingsApplied.windowSize.width >= 1600 && result.uiSettings.settingsApplied.windowSize.width <= 1602 &&
+          result.uiSettings.settingsApplied.windowSize.height >= 900 && result.uiSettings.settingsApplied.windowSize.height <= 902 &&
           result.uiSettings.resultPageSize === 40 && result.uiSettings.hiddenStudyDetails.fullVerseHidden &&
           result.uiSettings.hiddenStudyDetails.originalTermsHidden && result.uiSettings.settingsReset.theme === 'light' &&
           result.uiSettings.settingsReset.stored.resultsPerPage === 80 && result.uiSettings.settingsReset.confirmation.includes('Saved passages were not changed')

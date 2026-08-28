@@ -8,11 +8,12 @@ interface NativeEngineHealth {
 }
 
 interface WordsOfYeshuaBridge {
-  readonly runtime: 'electron'
+  readonly runtime: 'electron' | 'browser' | 'capacitor'
   getNativeHealth: () => Promise<NativeEngineHealth>
   searchBiblicalContent: (query: string, candidates: string[]) => Promise<number[]>
   minimizeWindow: () => void
   closeWindow: () => void
+  setDisplaySettings?: (settings: { displayScale: number; windowResolution: string }) => void
 }
 
 interface Window {

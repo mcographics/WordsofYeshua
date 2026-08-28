@@ -183,6 +183,17 @@ describe('Words of Yeshua', () => {
     expect(JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}')).toMatchObject({ theme: 'dark', textSize: 'large', compactCards: true, reduceMotion: true })
   })
 
+  it('applies and persists display scale and window resolution settings', () => {
+    render(<App />)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Settings' })[0])
+    fireEvent.click(screen.getByRole('button', { name: '125%' }))
+    fireEvent.click(screen.getByRole('button', { name: '1600 × 900' }))
+
+    expect(document.documentElement.dataset).toMatchObject({ displayScale: '125', windowResolution: '1600x900' })
+    expect(document.documentElement.style.getPropertyValue('--display-scale')).toBe('1.25')
+    expect(JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}')).toMatchObject({ displayScale: 125, windowResolution: '1600x900' })
+  })
+
   it('can hide full-verse and original-language study sections', () => {
     render(<App />)
     fireEvent.click(screen.getAllByRole('button', { name: 'Settings' })[0])

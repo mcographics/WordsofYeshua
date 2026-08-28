@@ -43,4 +43,13 @@ describe('app settings', () => {
     expect(sanitizeAppSettings({ theme: 'linen' }).theme).toBe('light')
     expect(sanitizeAppSettings({ theme: 'night' }).theme).toBe('dark')
   })
+
+  it('sanitizes display scale and window resolution preferences', () => {
+    expect(sanitizeAppSettings({ displayScale: 125, windowResolution: '1600x900' })).toMatchObject({
+      displayScale: 125, windowResolution: '1600x900',
+    })
+    expect(sanitizeAppSettings({ displayScale: 999, windowResolution: '640x480' })).toMatchObject({
+      displayScale: 100, windowResolution: 'auto',
+    })
+  })
 })
