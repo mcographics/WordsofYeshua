@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft, ArrowRight, Bookmark, BookOpen, CalendarDays, ChevronRight, CircleUserRound,
-  Compass, Eye, FileText, Gauge, Heart, Home, Languages, Landmark, LayoutGrid, MapPin, Menu,
-  Minus, Monitor, Moon, RotateCcw, Search, Settings, Sparkles, Sun, Tag, Type, UsersRound, X,
+  Compass, Download, Eye, FileText, Gauge, Github, Heart, Home, Languages, Landmark, LayoutGrid,
+  MapPin, Menu, Minus, Monitor, Moon, RefreshCw, RotateCcw, Search, Settings, Sparkles, Sun, Tag,
+  Type, UsersRound, X,
 } from 'lucide-react'
 import brandLogo from '../Assets/logo.png'
 import stainedGlassTruth from '../Assets/upscaled/689ba15a-2da2-4439-8729-a34045d248b8_01_upscaled.png'
@@ -300,11 +301,68 @@ function SectionHeading({ eyebrow, title, action, onClick }: { eyebrow: string; 
 
 type UpdateSetting = <Key extends keyof AppSettings>(key: Key, value: AppSettings[Key]) => void
 type SettingOption = { value: string | number; label: string; note?: string; icon?: typeof Sun }
+const GITHUB_RELEASES_URL = 'https://github.com/mcographics/WordsofYeshua/releases/latest'
+
+const browserUpdateState: UpdateState = {
+  phase: 'unsupported',
+  message: 'Automatic updates are available in the installed Windows app.',
+  currentVersion: '',
+  availableVersion: null,
+  percent: 0,
+  transferred: 0,
+  total: 0,
+  bytesPerSecond: 0,
+}
+
+function formatUpdateBytes(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return '0 MB'
+  if (value >= 1024 ** 3) return `${(value / 1024 ** 3).toFixed(1)} GB`
+  return `${(value / 1024 ** 2).toFixed(1)} MB`
+}
 
 function SettingsView({ settings, updateSetting, resetSettings }: {
   settings: AppSettings; updateSetting: UpdateSetting; resetSettings: () => void
 }) {
   const [resetNotice, setResetNotice] = useState(false)
+  const [updateState, setUpdateState] = useState<UpdateState>(browserUpdateState)
+  const bridge = window.wordsOfYeshua
+  const supportsAutoUpdates = Boolean(bridge?.getUpdateState && bridge.checkForUpdates && bridge.installUpdate) && updateState.phase !== 'unsupported'
+
+  useEffect(() => {
+    if (!bridge?.getUpdateState) return
+    let active = true
+    bridge.getUpdateState().then((state) => { if (active) setUpdateState(state) }).catch((error: unknown) => {
+      if (active) setUpdateState({ ...browserUpdateState, phase: 'error', message: `Could not read update status: ${error instanceof Error ? error.message : String(error)}` })
+    })
+    const unsubscribe = bridge.onUpdateState?.((state) => { if (active) setUpdateState(state) })
+    return () => { active = false; unsubscribe?.() }
+  }, [bridge])
+
+  const runUpdateAction = async (action: 'check' | 'install') => {
+    const request = action === 'check' ? bridge?.checkForUpdates : bridge?.installUpdate
+    if (!request) return
+    setUpdateState((current) => ({
+      ...current,
+      phase: 'checking',
+      message: action === 'install' ? 'Checking for an update before installation…' : 'Checking GitHub for the latest release…',
+      percent: null,
+    }))
+    try {
+      setUpdateState(await request())
+    } catch (error) {
+      setUpdateState((current) => ({ ...current, phase: 'error', message: `Update failed: ${error instanceof Error ? error.message : String(error)}`, percent: 0 }))
+    }
+  }
+
+  const viewLatestRelease = async () => {
+    try {
+      if (bridge?.openLatestRelease) await bridge.openLatestRelease()
+      else window.open(GITHUB_RELEASES_URL, '_blank', 'noopener,noreferrer')
+    } catch (error) {
+      setUpdateState((current) => ({ ...current, phase: 'error', message: `Could not open GitHub: ${error instanceof Error ? error.message : String(error)}` }))
+    }
+  }
+
   const reset = () => {
     resetSettings()
     setResetNotice(true)
@@ -316,6 +374,37 @@ function SettingsView({ settings, updateSetting, resetSettings }: {
     <div className="local-settings-note"><span><Settings size={19} /></span><div><strong>Private and device-local</strong><p>These choices are saved only in Words of Yeshua on this device. Bookmarks are kept separate and are never removed by resetting settings.</p></div></div>
 
     <div className="settings-groups">
+      <SettingsGroup icon={Download} title="App updates" description="Check GitHub, download a new Windows release, and install it without leaving the app.">
+        <div className="update-panel">
+          <div className="update-status-line">
+            <span className={`update-status-icon ${updateState.phase}`} aria-hidden="true"><RefreshCw size={18} /></span>
+            <div><strong>{updateState.phase === 'downloaded' ? 'Ready to install' : updateState.phase === 'current' ? 'App is up to date' : 'Update status'}</strong>
+              <p aria-live="polite">{updateState.message}</p></div>
+          </div>
+          <div className="update-progress-wrap">
+            <progress aria-label="Windows update progress" max={100} value={updateState.percent === null ? undefined : updateState.percent} />
+            <div className="update-progress-meta">
+              <span>{updateState.currentVersion ? `Current version: v${updateState.currentVersion}` : 'Windows desktop releases'}</span>
+              {updateState.phase === 'downloading' && updateState.total > 0
+                ? <span>{formatUpdateBytes(updateState.transferred)} of {formatUpdateBytes(updateState.total)} · {formatUpdateBytes(updateState.bytesPerSecond)}/s</span>
+                : updateState.availableVersion && <span>Available: v{updateState.availableVersion}</span>}
+            </div>
+          </div>
+          <div className="update-actions">
+            <button type="button" className="update-action" disabled={!supportsAutoUpdates || ['checking', 'downloading', 'installing'].includes(updateState.phase)} onClick={() => void runUpdateAction('check')}>
+              <RefreshCw size={17} /> <span>Check for update</span>
+            </button>
+            <button type="button" className="update-action primary-update-action" disabled={!supportsAutoUpdates || updateState.phase === 'installing'} onClick={() => void runUpdateAction('install')}>
+              <Download size={17} /> <span>Install Update</span>
+            </button>
+            <button type="button" className="update-action" onClick={() => void viewLatestRelease()}>
+              <Github size={17} /> <span>View Latest on GitHub</span>
+            </button>
+          </div>
+          <p className="update-help">Install Update can be used at any time. If no update has been checked or downloaded yet, Words of Yeshua will check, download, install, close, and reopen automatically.</p>
+        </div>
+      </SettingsGroup>
+
       <SettingsGroup icon={Type} title="Appearance" description="Choose the paper, type size, and Scripture typeface that feel best to you.">
         <SegmentedSetting label="Color theme" description="White, black, and gold with restrained blue-grey supporting tones." value={settings.theme}
           options={[{ value: 'light', label: 'Light', icon: Sun }, { value: 'dark', label: 'Dark', icon: Moon }, { value: 'slate', label: 'Slate', icon: FileText }]}

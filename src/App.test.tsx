@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { DEFAULT_APP_SETTINGS, SETTINGS_STORAGE_KEY } from './settings'
@@ -165,6 +165,63 @@ describe('Words of Yeshua', () => {
 
     expect(minimizeWindow).toHaveBeenCalledOnce()
     expect(closeWindow).toHaveBeenCalledOnce()
+  })
+
+  it('provides the complete check, download, install, and GitHub update controls', async () => {
+    let updateListener: ((state: UpdateState) => void) | undefined
+    const checkForUpdates = vi.fn().mockResolvedValue({
+      phase: 'downloaded', message: 'Update v0.5.4 is downloaded and ready to install.', currentVersion: '0.5.3',
+      availableVersion: '0.5.4', percent: 100, transferred: 200, total: 200, bytesPerSecond: 0,
+    } satisfies UpdateState)
+    const installUpdate = vi.fn().mockResolvedValue({
+      phase: 'installing', message: 'Closing to install.', currentVersion: '0.5.3', availableVersion: '0.5.4',
+      percent: 100, transferred: 200, total: 200, bytesPerSecond: 0,
+    } satisfies UpdateState)
+    const openLatestRelease = vi.fn().mockResolvedValue(true)
+    window.wordsOfYeshua = {
+      runtime: 'electron',
+      getNativeHealth: vi.fn().mockResolvedValue({ ok: true, engine: 'words-of-yeshua-native' }),
+      searchBiblicalContent: vi.fn().mockResolvedValue([]),
+      minimizeWindow: vi.fn(),
+      closeWindow: vi.fn(),
+      getUpdateState: vi.fn().mockResolvedValue({
+        phase: 'idle', message: 'Ready to check for a Windows update.', currentVersion: '0.5.3',
+        availableVersion: null, percent: 0, transferred: 0, total: 0, bytesPerSecond: 0,
+      } satisfies UpdateState),
+      checkForUpdates,
+      installUpdate,
+      openLatestRelease,
+      onUpdateState: (listener) => { updateListener = listener; return () => { updateListener = undefined } },
+    }
+
+    render(<App />)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Settings' })[0])
+
+    expect(await screen.findByText('Ready to check for a Windows update.')).toBeInTheDocument()
+    const checkButton = screen.getByRole('button', { name: 'Check for update' })
+    const installButton = screen.getByRole('button', { name: 'Install Update' })
+    const githubButton = screen.getByRole('button', { name: 'View Latest on GitHub' })
+
+    act(() => updateListener?.({
+      phase: 'downloading', message: 'Downloading update… 42%', currentVersion: '0.5.3', availableVersion: '0.5.4',
+      percent: 42, transferred: 84 * 1024 ** 2, total: 200 * 1024 ** 2, bytesPerSecond: 2 * 1024 ** 2,
+    }))
+    expect(screen.getByRole('progressbar', { name: 'Windows update progress' })).toHaveAttribute('value', '42')
+    expect(screen.getByText(/84.0 MB of 200.0 MB · 2.0 MB\/s/)).toBeInTheDocument()
+
+    fireEvent.click(installButton)
+    await waitFor(() => expect(installUpdate).toHaveBeenCalledOnce())
+
+    fireEvent.click(githubButton)
+    expect(openLatestRelease).toHaveBeenCalledOnce()
+
+    act(() => updateListener?.({
+      phase: 'idle', message: 'Ready to check for a Windows update.', currentVersion: '0.5.3', availableVersion: null,
+      percent: 0, transferred: 0, total: 0, bytesPerSecond: 0,
+    }))
+    fireEvent.click(checkButton)
+    await waitFor(() => expect(checkForUpdates).toHaveBeenCalledOnce())
+    expect(await screen.findByText('Update v0.5.4 is downloaded and ready to install.')).toBeInTheDocument()
   })
 
   it('applies and persists appearance settings immediately', () => {

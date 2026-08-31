@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain, net, protocol } = require('electron')
+const { app, BrowserWindow, ipcMain, net, protocol, shell } = require('electron')
+const { autoUpdater } = require('electron-updater')
 const fs = require('node:fs')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
@@ -14,6 +15,21 @@ if (process.platform === 'win32') {
 let nativeEngine = null
 let nativeLoadError = null
 const windows = new Set()
+const GITHUB_RELEASES_URL = 'https://github.com/mcographics/WordsofYeshua/releases/latest'
+let updateOperation = null
+let updateDownloaded = false
+let installWhenReady = false
+let availableUpdate = null
+let updateState = {
+  phase: 'idle',
+  message: 'Ready to check for a Windows update.',
+  currentVersion: app.getVersion(),
+  availableVersion: null,
+  percent: 0,
+  transferred: 0,
+  total: 0,
+  bytesPerSecond: 0,
+}
 
 protocol.registerSchemesAsPrivileged([{
   scheme: 'woy',
@@ -118,6 +134,176 @@ function getTrustedWindowForEvent(event) {
   if (!targetWindow || targetWindow.isDestroyed() || !windows.has(targetWindow)) return null
   return targetWindow
 }
+
+function canUseAutoUpdater() {
+  return process.platform === 'win32' && app.isPackaged && process.env.WOY_ELECTRON_SMOKE !== '1'
+}
+
+function sendUpdateState() {
+  for (const targetWindow of windows) {
+    if (!targetWindow.isDestroyed()) targetWindow.webContents.send('updates:state', updateState)
+  }
+}
+
+function setUpdateState(nextState) {
+  updateState = { ...updateState, ...nextState }
+  sendUpdateState()
+  return updateState
+}
+
+function requireTrustedUpdateRequest(event) {
+  if (!getTrustedWindowForEvent(event)) throw new Error('Update request was rejected.')
+}
+
+function beginUpdateInstallation() {
+  if (!updateDownloaded) return updateState
+  installWhenReady = false
+  setUpdateState({
+    phase: 'installing',
+    message: 'Closing Words of Yeshua to install the update. The app will reopen automatically.',
+    percent: 100,
+  })
+  setTimeout(() => autoUpdater.quitAndInstall(false, true), 250)
+  return updateState
+}
+
+async function checkAndDownloadUpdate({ installAfterDownload = false } = {}) {
+  if (!canUseAutoUpdater()) {
+    return setUpdateState({
+      phase: 'unsupported',
+      message: 'Automatic updates are available in the installed Windows app.',
+      percent: 0,
+    })
+  }
+
+  if (installAfterDownload) installWhenReady = true
+  if (updateDownloaded) return installWhenReady ? beginUpdateInstallation() : updateState
+  if (updateOperation) return updateOperation
+
+  availableUpdate = null
+  updateOperation = (async () => {
+    try {
+      setUpdateState({
+        phase: 'checking',
+        message: 'Checking GitHub for the latest release…',
+        availableVersion: null,
+        percent: null,
+        transferred: 0,
+        total: 0,
+        bytesPerSecond: 0,
+      })
+      await autoUpdater.checkForUpdates()
+      if (!availableUpdate) return updateState
+
+      setUpdateState({
+        phase: 'downloading',
+        message: `Downloading v${availableUpdate.version}…`,
+        availableVersion: availableUpdate.version,
+        percent: 0,
+      })
+      await autoUpdater.downloadUpdate()
+      return updateState
+    } catch (error) {
+      installWhenReady = false
+      return setUpdateState({
+        phase: 'error',
+        message: `Update failed: ${error instanceof Error ? error.message : String(error)}`,
+        percent: 0,
+      })
+    } finally {
+      updateOperation = null
+    }
+  })()
+
+  return updateOperation
+}
+
+function configureAutoUpdater() {
+  if (!canUseAutoUpdater()) {
+    setUpdateState({
+      phase: 'unsupported',
+      message: 'Automatic updates are available in the installed Windows app.',
+    })
+    return
+  }
+
+  autoUpdater.autoDownload = false
+  autoUpdater.autoInstallOnAppQuit = false
+  autoUpdater.allowPrerelease = false
+  autoUpdater.logger = console
+
+  autoUpdater.on('checking-for-update', () => {
+    setUpdateState({ phase: 'checking', message: 'Checking GitHub for the latest release…', percent: null })
+  })
+  autoUpdater.on('update-available', (info) => {
+    availableUpdate = info
+    setUpdateState({
+      phase: 'available',
+      message: `Update v${info.version} is available. Preparing the download…`,
+      availableVersion: info.version,
+      percent: null,
+    })
+  })
+  autoUpdater.on('update-not-available', () => {
+    availableUpdate = null
+    installWhenReady = false
+    setUpdateState({
+      phase: 'current',
+      message: `You already have the latest version (v${app.getVersion()}).`,
+      availableVersion: null,
+      percent: 100,
+    })
+  })
+  autoUpdater.on('download-progress', (progress) => {
+    const percent = Math.max(0, Math.min(100, progress.percent))
+    setUpdateState({
+      phase: 'downloading',
+      message: `Downloading update… ${percent.toFixed(0)}%`,
+      percent,
+      transferred: progress.transferred,
+      total: progress.total,
+      bytesPerSecond: progress.bytesPerSecond,
+    })
+  })
+  autoUpdater.on('update-downloaded', (info) => {
+    updateDownloaded = true
+    availableUpdate = info
+    setUpdateState({
+      phase: 'downloaded',
+      message: `Update v${info.version} is downloaded and ready to install.`,
+      availableVersion: info.version,
+      percent: 100,
+    })
+    if (installWhenReady) beginUpdateInstallation()
+  })
+  autoUpdater.on('error', (error) => {
+    installWhenReady = false
+    setUpdateState({ phase: 'error', message: `Update failed: ${error.message}`, percent: 0 })
+  })
+}
+
+ipcMain.handle('updates:get-state', (event) => {
+  requireTrustedUpdateRequest(event)
+  return updateState
+})
+
+ipcMain.handle('updates:check', (event) => {
+  requireTrustedUpdateRequest(event)
+  installWhenReady = false
+  return checkAndDownloadUpdate()
+})
+
+ipcMain.handle('updates:install', (event) => {
+  requireTrustedUpdateRequest(event)
+  if (updateDownloaded) return beginUpdateInstallation()
+  return checkAndDownloadUpdate({ installAfterDownload: true })
+})
+
+ipcMain.handle('updates:view-latest', async (event) => {
+  requireTrustedUpdateRequest(event)
+  await shell.openExternal(GITHUB_RELEASES_URL)
+  return true
+})
 
 ipcMain.on('window:minimize', (event) => {
   const targetWindow = getTrustedWindowForEvent(event)
@@ -236,7 +422,13 @@ function createWindow() {
           }
           clickTextButton('.desktop-nav button', 'Settings')
           await wait(100)
-          const settingsRendered = document.querySelectorAll('.settings-group').length === 5
+          const settingsRendered = document.querySelectorAll('.settings-group').length === 6
+          const updateState = await window.wordsOfYeshua.getUpdateState()
+          const updateControls = {
+            buttons: Array.from(document.querySelectorAll('.update-action')).map((button) => button.textContent.trim()),
+            progress: Boolean(document.querySelector('progress[aria-label="Windows update progress"]')),
+            phase: updateState.phase,
+          }
           clickTextButton('.setting-options button', 'Dark')
           clickTextButton('.setting-options button', 'Large')
           clickTextButton('.setting-options button', '40')
@@ -285,7 +477,7 @@ function createWindow() {
             matches,
             rendered: Boolean(document.querySelector('.app-shell .settings-view')),
             uiSearch,
-            uiSettings: { settingsRendered, settingsApplied, resultPageSize, hiddenStudyDetails, settingsReset }
+            uiSettings: { settingsRendered, updateControls, settingsApplied, resultPageSize, hiddenStudyDetails, settingsReset }
           }
         })()`)
         console.log(JSON.stringify(result))
@@ -298,7 +490,9 @@ function createWindow() {
           result.uiSearch.strongNumber.count > 0 && result.uiSearch.greekLemma.count > 0 &&
           result.uiSearch.noMatch.count === 0 && result.uiSearch.noMatch.noResults &&
           result.uiSearch.afterClear.value === '' && result.uiSearch.afterClear.count > 0 &&
-          result.uiSettings.settingsRendered && result.uiSettings.settingsApplied.theme === 'dark' &&
+          result.uiSettings.settingsRendered && result.uiSettings.updateControls.progress && result.uiSettings.updateControls.phase === 'unsupported' &&
+          result.uiSettings.updateControls.buttons.join('|') === 'Check for update|Install Update|View Latest on GitHub' &&
+          result.uiSettings.settingsApplied.theme === 'dark' &&
           result.uiSettings.settingsApplied.textSize === 'large' && result.uiSettings.settingsApplied.compactCards === 'true' &&
           result.uiSettings.settingsApplied.reduceMotion === 'true' && result.uiSettings.settingsApplied.stored.resultsPerPage === 40 &&
           result.uiSettings.settingsApplied.displayScale === '125' && result.uiSettings.settingsApplied.windowResolution === '1600x900' &&
@@ -330,6 +524,7 @@ function createWindow() {
 app.whenReady().then(() => {
   registerApplicationProtocol()
   loadNativeEngine()
+  configureAutoUpdater()
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

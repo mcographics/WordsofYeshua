@@ -1,7 +1,7 @@
 {
   "name": "words-of-yeshua",
   "private": true,
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "A Christ-centred, local-first Bible reader and study companion for exploring the words of Yeshua in scriptural context.",
   "main": "electron/main.cjs",
   "author": "Words of Yeshua",
@@ -30,6 +30,7 @@
     "make:portable": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build && cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64 && electron-builder --config electron-builder.config.cjs --win zip"
   },
   "dependencies": {
+    "electron-updater": "6.8.9",
     "lucide-react": "0.468.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"

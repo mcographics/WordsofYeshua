@@ -25,6 +25,11 @@ module.exports = {
       to: 'icon.ico',
     },
   ],
+  publish: [{
+    provider: 'github',
+    owner: 'mcographics',
+    repo: 'WordsofYeshua',
+  }],
   electronFuses: {
     runAsNode: false,
     enableCookieEncryption: true,
