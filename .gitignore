@@ -4,6 +4,12 @@ dist/
 /releases/
 native/build/
 
+# Local editor settings
+.vscode/
+
+# Unused local reference artwork; imported stained-glass assets remain tracked.
+Assets/upscaled/ChatGPT Image Aug 23, 2026,*.png
+
 # Local reference library: retained on development machines, not part of the
 # application repository. The KJV source and selected runtime indexes remain
 # tracked below by being outside these patterns.
