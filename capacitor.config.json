@@ -1,0 +1,10 @@
+{
+  "appId": "com.mcographics.wordsofyeshua",
+  "appName": "Words of Yeshua",
+  "webDir": "dist",
+  "backgroundColor": "#f3f5f6",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#f3f5f6"
+  }
+}

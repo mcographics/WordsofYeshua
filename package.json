@@ -23,6 +23,9 @@
     "native:configure": "cmake-js configure --directory native --runtime electron --runtime-version 43.3.0 --arch x64",
     "native:build": "cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64",
     "native:smoke": "node scripts/launch-electron.cjs electron/native-smoke.cjs",
+    "android:sync": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1 -SyncOnly",
+    "android:debug": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1",
+    "android:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1 -Release",
     "electron:smoke": "cross-env WOY_ELECTRON_SMOKE=1 node scripts/launch-electron.cjs .",
     "icon:build": "node scripts/generate-windows-icon.cjs",
     "package": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build && cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64 && electron-builder --config electron-builder.config.cjs --dir --win",
@@ -30,12 +33,17 @@
     "make:portable": "node scripts/generate-biblical-content.mjs && node scripts/validate-biblical-content.mjs && tsc -b && vite build && cmake-js compile --directory native --runtime electron --runtime-version 43.3.0 --arch x64 && electron-builder --config electron-builder.config.cjs --win zip"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.0",
+    "@capacitor/app": "8.0.1",
+    "@capacitor/browser": "8.0.4",
+    "@capacitor/core": "8.5.0",
     "electron-updater": "6.8.9",
     "lucide-react": "0.468.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.0",
     "@eslint/js": "9.39.5",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.1.0",

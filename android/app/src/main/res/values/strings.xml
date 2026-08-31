@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Words of Yeshua</string>
+    <string name="title_activity_main">Words of Yeshua</string>
+    <string name="package_name">com.mcographics.wordsofyeshua</string>
+    <string name="custom_url_scheme">com.mcographics.wordsofyeshua</string>
+</resources>

@@ -33,6 +33,13 @@ const categoryMeta: Record<Category, { note: string; icon: typeof CalendarDays; 
 }
 const categories = Object.keys(categoryMeta) as Category[]
 
+function loadRuntimeSettings(): AppSettings {
+  const loaded = loadAppSettings()
+  return window.wordsOfYeshua?.runtime === 'capacitor'
+    ? { ...loaded, displayScale: 100, windowResolution: 'auto' }
+    : loaded
+}
+
 const heroSlides = [
   { src: stainedGlassTruth, label: 'Thy Word Is Truth' },
   { src: stainedGlassFinished, label: 'It Is Finished' },
@@ -72,7 +79,7 @@ function matchesCategory(item: Saying, category: Category, value: string) {
 }
 
 export default function App() {
-  const [settings, setSettings] = useState<AppSettings>(loadAppSettings)
+  const [settings, setSettings] = useState<AppSettings>(loadRuntimeSettings)
   const [view, setView] = useState<View>(() => settings.startPage)
   const [search, setSearch] = useState('')
   const [activeBook, setActiveBook] = useState('All')
@@ -91,8 +98,8 @@ export default function App() {
     const bridge = window.wordsOfYeshua
     const usesNativeDisplay = bridge?.runtime === 'electron'
     document.documentElement.dataset.nativeDisplay = String(usesNativeDisplay)
-    bridge?.setDisplaySettings?.({ displayScale: settings.displayScale, windowResolution: settings.windowResolution })
-    if (!usesNativeDisplay && settings.windowResolution !== 'auto') {
+    if (usesNativeDisplay) bridge.setDisplaySettings?.({ displayScale: settings.displayScale, windowResolution: settings.windowResolution })
+    if (!usesNativeDisplay && bridge?.runtime !== 'capacitor' && settings.windowResolution !== 'auto') {
       const match = /^(\d+)x(\d+)$/.exec(settings.windowResolution)
       const browserAllowsResize = typeof navigator === 'undefined' || !navigator.userAgent.toLowerCase().includes('jsdom')
       if (match && browserAllowsResize && typeof window.resizeTo === 'function') {
@@ -326,6 +333,8 @@ function SettingsView({ settings, updateSetting, resetSettings }: {
   const [resetNotice, setResetNotice] = useState(false)
   const [updateState, setUpdateState] = useState<UpdateState>(browserUpdateState)
   const bridge = window.wordsOfYeshua
+  const isAndroidRuntime = bridge?.runtime === 'capacitor'
+  const updatePlatform = bridge?.runtime === 'capacitor' ? 'Android' : 'Windows'
   const supportsAutoUpdates = Boolean(bridge?.getUpdateState && bridge.checkForUpdates && bridge.installUpdate) && updateState.phase !== 'unsupported'
 
   useEffect(() => {
@@ -374,7 +383,7 @@ function SettingsView({ settings, updateSetting, resetSettings }: {
     <div className="local-settings-note"><span><Settings size={19} /></span><div><strong>Private and device-local</strong><p>These choices are saved only in Words of Yeshua on this device. Bookmarks are kept separate and are never removed by resetting settings.</p></div></div>
 
     <div className="settings-groups">
-      <SettingsGroup icon={Download} title="App updates" description="Check GitHub, download a new Windows release, and install it without leaving the app.">
+      <SettingsGroup icon={Download} title="App updates" description={`Check GitHub, download a new ${updatePlatform} release, and install it without leaving the app.`}>
         <div className="update-panel">
           <div className="update-status-line">
             <span className={`update-status-icon ${updateState.phase}`} aria-hidden="true"><RefreshCw size={18} /></span>
@@ -382,9 +391,9 @@ function SettingsView({ settings, updateSetting, resetSettings }: {
               <p aria-live="polite">{updateState.message}</p></div>
           </div>
           <div className="update-progress-wrap">
-            <progress aria-label="Windows update progress" max={100} value={updateState.percent === null ? undefined : updateState.percent} />
+            <progress aria-label={`${updatePlatform} update progress`} max={100} value={updateState.percent === null ? undefined : updateState.percent} />
             <div className="update-progress-meta">
-              <span>{updateState.currentVersion ? `Current version: v${updateState.currentVersion}` : 'Windows desktop releases'}</span>
+              <span>{updateState.currentVersion ? `Current version: v${updateState.currentVersion}` : `${updatePlatform} releases`}</span>
               {updateState.phase === 'downloading' && updateState.total > 0
                 ? <span>{formatUpdateBytes(updateState.transferred)} of {formatUpdateBytes(updateState.total)} · {formatUpdateBytes(updateState.bytesPerSecond)}/s</span>
                 : updateState.availableVersion && <span>Available: v{updateState.availableVersion}</span>}
@@ -401,7 +410,7 @@ function SettingsView({ settings, updateSetting, resetSettings }: {
               <Github size={17} /> <span>View Latest on GitHub</span>
             </button>
           </div>
-          <p className="update-help">Install Update can be used at any time. If no update has been checked or downloaded yet, Words of Yeshua will check, download, install, close, and reopen automatically.</p>
+          <p className="update-help">Install Update can be used at any time. Words of Yeshua checks the official {updatePlatform} release line, downloads only the expected package, and then completes the platform’s normal installation step.</p>
         </div>
       </SettingsGroup>
 
@@ -428,14 +437,14 @@ function SettingsView({ settings, updateSetting, resetSettings }: {
           onChange={(checked) => updateSetting('compactCards', checked)} />
       </SettingsGroup>
 
-      <SettingsGroup icon={Monitor} title="Display and window" description="Set a comfortable interface scale and preferred window size. These controls work in the desktop app and remain available in browser-based shells.">
+      {!isAndroidRuntime && <SettingsGroup icon={Monitor} title="Display and window" description="Set a comfortable interface scale and preferred window size. These controls work in the desktop app and remain available in browser-based shells.">
         <SegmentedSetting label="Display scale (DPI)" description="Scales the reading interface for high-DPI screens. 100% is the default size." value={settings.displayScale}
           options={[80, 90, 100, 110, 125, 150].map((value) => ({ value, label: `${value}%` }))}
           onChange={(value) => updateSetting('displayScale', value as AppSettings['displayScale'])} />
         <SegmentedSetting label="Window resolution" description="Choose the preferred desktop window size. A browser may restrict script-controlled resizing." value={settings.windowResolution}
           options={[{ value: 'auto', label: 'Auto' }, { value: '1280x720', label: '1280 × 720' }, { value: '1366x768', label: '1366 × 768' }, { value: '1600x900', label: '1600 × 900' }, { value: '1920x1080', label: '1920 × 1080' }]}
           onChange={(value) => updateSetting('windowResolution', value as AppSettings['windowResolution'])} />
-      </SettingsGroup>
+      </SettingsGroup>}
 
       <SettingsGroup icon={Languages} title="Study details" description="Decide how much supporting material is shown in a passage’s context panel.">
         <SettingSwitch icon={FileText} label="Show complete verse" description="Includes the full KJV verse alongside the isolated words of Jesus." checked={settings.showFullVerse}

@@ -224,6 +224,52 @@ describe('Words of Yeshua', () => {
     expect(await screen.findByText('Update v0.5.4 is downloaded and ready to install.')).toBeInTheDocument()
   })
 
+  it('labels the same update controls for the Android runtime', async () => {
+    const checkForUpdates = vi.fn().mockResolvedValue({
+      phase: 'current', message: 'You already have the latest Android version (v0.1.0).', currentVersion: '0.1.0',
+      availableVersion: null, percent: 100, transferred: 0, total: 0, bytesPerSecond: 0,
+    } satisfies UpdateState)
+    window.wordsOfYeshua = {
+      runtime: 'capacitor',
+      getNativeHealth: vi.fn().mockResolvedValue({ ok: true, engine: 'javascript-mobile-runtime' }),
+      searchBiblicalContent: vi.fn().mockResolvedValue([]),
+      minimizeWindow: vi.fn(), closeWindow: vi.fn(),
+      getUpdateState: vi.fn().mockResolvedValue({
+        phase: 'idle', message: 'Ready to check for an Android update.', currentVersion: '0.1.0',
+        availableVersion: null, percent: 0, transferred: 0, total: 0, bytesPerSecond: 0,
+      } satisfies UpdateState),
+      checkForUpdates,
+      installUpdate: vi.fn(),
+      openLatestRelease: vi.fn().mockResolvedValue(true),
+    }
+
+    render(<App />)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Settings' })[0])
+    expect(await screen.findByText(/check GitHub, download a new Android release/i)).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Android update progress' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Check for update' }))
+    await waitFor(() => expect(checkForUpdates).toHaveBeenCalledOnce())
+    expect(await screen.findByText(/latest Android version/i)).toBeInTheDocument()
+  })
+
+  it('removes desktop display controls and normalizes their stored values on Android', async () => {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ ...DEFAULT_APP_SETTINGS, displayScale: 150, windowResolution: '1920x1080' }))
+    window.wordsOfYeshua = {
+      runtime: 'capacitor',
+      getNativeHealth: vi.fn().mockResolvedValue({ ok: true, engine: 'javascript-mobile-runtime' }),
+      searchBiblicalContent: vi.fn().mockResolvedValue([]),
+      minimizeWindow: vi.fn(), closeWindow: vi.fn(),
+    }
+
+    render(<App />)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Settings' })[0])
+
+    expect(screen.queryByText('Display and window')).not.toBeInTheDocument()
+    expect(screen.queryByText('Display scale (DPI)')).not.toBeInTheDocument()
+    expect(screen.queryByText('Window resolution')).not.toBeInTheDocument()
+    await waitFor(() => expect(JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}')).toMatchObject({ displayScale: 100, windowResolution: 'auto' }))
+  })
+
   it('applies and persists appearance settings immediately', () => {
     render(<App />)
     fireEvent.click(screen.getAllByRole('button', { name: 'Settings' })[0])
