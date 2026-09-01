@@ -50,6 +50,12 @@ function expectedApkUrl(tag: string, name: unknown) {
   return `${DOWNLOAD_ROOT}${encodeURIComponent(tag)}/${encodeURIComponent(expectedName)}`
 }
 
+function normalizeSha256(value: unknown) {
+  if (typeof value !== 'string') return ''
+  const match = /^sha256:([0-9a-f]{64})$/i.exec(value.trim())
+  return match ? match[1].toLowerCase() : ''
+}
+
 export async function fetchLatestAndroidRelease({
   fetchImpl = globalThis.fetch,
   currentVersion,
@@ -68,6 +74,7 @@ export async function fetchLatestAndroidRelease({
   apkUrl: string
   apkName: string
   apkSize: number
+  apkSha256: string
 }> {
   if (typeof fetchImpl !== 'function') throw new Error('The Android update service is unavailable.')
   if (!parseVersion(`android-v${currentVersion}`)) throw new Error('The installed Android application version is invalid.')
@@ -88,7 +95,7 @@ export async function fetchLatestAndroidRelease({
   const candidates = releases.filter((release) => {
     const item = release as { tag_name?: unknown; draft?: unknown; prerelease?: unknown }
     return Boolean(normalizeAndroidReleaseTag(item.tag_name)) && !item.draft && !item.prerelease
-  }) as Array<{ tag_name?: unknown; assets?: Array<{ name?: unknown; size?: unknown }> }>
+  }) as Array<{ tag_name?: unknown; assets?: Array<{ name?: unknown; size?: unknown; digest?: unknown }> }>
   candidates.sort((left, right) => compareAndroidVersions(String(right.tag_name), String(left.tag_name)))
   const release = candidates[0]
   const latestTag = normalizeAndroidReleaseTag(release?.tag_name)
@@ -106,7 +113,8 @@ export async function fetchLatestAndroidRelease({
     apkUrl,
     apkName: String(apk.name),
     apkSize: Number(apk.size) || 0,
+    apkSha256: normalizeSha256(apk.digest),
   }
 }
 
-export { RELEASES_API_URL, normalizeAndroidReleaseTag, expectedApkUrl }
+export { RELEASES_API_URL, normalizeAndroidReleaseTag, expectedApkUrl, normalizeSha256 }

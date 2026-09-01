@@ -1,11 +1,7 @@
 name: Publish Android Stable Release
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'ANDROID_RELEASE_0.1.2.md'
-      - '.github/workflows/publish-android-stable.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,6 +15,7 @@ jobs:
       ANDROID_VERSION_CODE: '100002'
       ANDROID_TAG: 'android-v0.1.2'
       ANDROID_ASSET: 'Words-of-Yeshua-Android-0.1.2.apk'
+      ANDROID_CHECKSUM_ASSET: 'Words-of-Yeshua-Android-0.1.2.apk.sha256'
       BASELINE_TAG: 'android-v0.1.0'
       BASELINE_ASSET: 'Words-of-Yeshua-Android-0.1.0.apk'
       WOY_ANDROID_KEYSTORE_BASE64: ${{ secrets.WOY_ANDROID_KEYSTORE_BASE64 }}
@@ -124,7 +121,7 @@ jobs:
       - name: Prepare release asset
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk "${ANDROID_ASSET}"
-          sha256sum "${ANDROID_ASSET}"
+          sha256sum "${ANDROID_ASSET}" | tee "${ANDROID_CHECKSUM_ASSET}"
 
       - name: Publish stable GitHub release
         env:
@@ -135,7 +132,7 @@ jobs:
             echo "::error::Release ${ANDROID_TAG} already exists; refusing to overwrite a production release."
             exit 1
           fi
-          gh release create "${ANDROID_TAG}" "${ANDROID_ASSET}" \
+          gh release create "${ANDROID_TAG}" "${ANDROID_ASSET}" "${ANDROID_CHECKSUM_ASSET}" \
             --target "${GITHUB_SHA}" \
             --title "Words of Yeshua Android v${ANDROID_VERSION}" \
             --notes-file ANDROID_RELEASE_0.1.2.md \

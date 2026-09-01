@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
-def androidVersionCodeValue = (project.findProperty('androidVersionCode') ?: '100000').toString().toInteger()
-def androidVersionNameValue = (project.findProperty('androidVersionName') ?: '0.1.0').toString()
+def androidVersionCodeValue = (project.findProperty('androidVersionCode') ?: '100002').toString().toInteger()
+def androidVersionNameValue = (project.findProperty('androidVersionName') ?: '0.1.2').toString()
 def releaseSigningProperties = new Properties()
 def releaseSigningPropertiesPath = System.getenv('WORDSOFYESHUA_ANDROID_SIGNING_PROPERTIES')
 def releaseSigningPropertiesFile = releaseSigningPropertiesPath

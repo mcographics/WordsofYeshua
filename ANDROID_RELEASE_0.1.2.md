@@ -4,10 +4,12 @@ Android v0.1.2 is the production follow-up to the v0.1.1 corrective test build. 
 
 ## What changed
 
-- Retains the corrected Android manifest without the unnecessary `REQUEST_INSTALL_PACKAGES` permission.
+- Retains the corrected Android manifest and declares `REQUEST_INSTALL_PACKAGES` because the app's in-app updater opens Android's package installer.
 - Builds the Android package from the checked-in generated Scripture catalogue, avoiding the missing Git LFS source objects that previously interrupted CI builds.
 - Uses the production Android release signing configuration rather than the temporary debug signing used for v0.1.1 testing.
 - Verifies the new APK's signing certificate against the original signed Android v0.1.0 APK before publication. The workflow refuses to publish if the signing identities do not match.
+- Restores the `REQUEST_INSTALL_PACKAGES` permission required by the in-app GitHub updater, opens Android's per-app install-source settings when that permission has not been granted, and passes an explicit FileProvider URI grant to the package installer.
+- Verifies the downloaded APK against GitHub's published SHA-256 asset digest before opening Android's installer, and publishes a matching `.apk.sha256` sidecar for manual downloads.
 - Advances the Android version to **0.1.2** with version code **100002**.
 
 ## Updating from Android v0.1.0

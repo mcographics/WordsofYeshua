@@ -5,7 +5,7 @@ import { normalizeSearchText } from './search'
 import { fetchLatestAndroidRelease } from './mobile-update-checker'
 
 interface AndroidUpdaterPlugin {
-  downloadAndInstall(options: { downloadUrl: string; version: string }): Promise<{ started: boolean; version: string }>
+  downloadAndInstall(options: { downloadUrl: string; version: string; expectedSha256?: string }): Promise<{ started: boolean; version: string }>
   addListener(eventName: 'downloadProgress', listener: (progress: { percent?: number; transferred?: number; total?: number; bytesPerSecond?: number }) => void): Promise<{ remove: () => Promise<void> }>
 }
 
@@ -74,7 +74,7 @@ if (isNativeAndroid && !window.wordsOfYeshua) {
       if (!status.availableVersion || !currentRelease?.updateAvailable) return status
       emit({ phase: 'downloading', message: `Downloading Android version ${status.availableVersion}…`, percent: 0 })
       try {
-        await AndroidUpdater.downloadAndInstall({ downloadUrl: currentRelease.apkUrl, version: currentRelease.latestVersion })
+        await AndroidUpdater.downloadAndInstall({ downloadUrl: currentRelease.apkUrl, version: currentRelease.latestVersion, expectedSha256: currentRelease.apkSha256 })
         return emit({ phase: 'installing', message: 'Android’s installer is open. Approve the update to finish installation.', percent: 100 })
       } catch (error) {
         return emit({ phase: 'error', message: `Android installation failed: ${error instanceof Error ? error.message : String(error)}`, percent: 0 })
