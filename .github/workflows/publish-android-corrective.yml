@@ -1,0 +1,77 @@
+name: Publish Android Corrective Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ANDROID_RELEASE.md'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-corrective-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ANDROID_VERSION: '0.1.1'
+      ANDROID_VERSION_CODE: '100001'
+      ANDROID_TAG: 'android-v0.1.1'
+      ANDROID_ASSET: 'Words-of-Yeshua-Android-0.1.1.apk'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: npm
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build web app from checked-in generated content
+        run: npx tsc -b && npx vite build
+
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
+
+      - name: Build corrective APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace \
+            -PandroidVersionCode=${ANDROID_VERSION_CODE} \
+            -PandroidVersionName=${ANDROID_VERSION}
+
+      - name: Prepare release asset
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk "${ANDROID_ASSET}"
+          sha256sum "${ANDROID_ASSET}"
+
+      - name: Publish GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${ANDROID_TAG}" >/dev/null 2>&1; then
+            gh release upload "${ANDROID_TAG}" "${ANDROID_ASSET}" --clobber
+            gh release edit "${ANDROID_TAG}" \
+              --title "Words of Yeshua Android v${ANDROID_VERSION} — Corrective Test Build" \
+              --notes-file ANDROID_RELEASE.md \
+              --prerelease
+          else
+            gh release create "${ANDROID_TAG}" "${ANDROID_ASSET}" \
+              --target "${GITHUB_SHA}" \
+              --title "Words of Yeshua Android v${ANDROID_VERSION} — Corrective Test Build" \
+              --notes-file ANDROID_RELEASE.md \
+              --prerelease
+          fi
