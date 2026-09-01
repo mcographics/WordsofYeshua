@@ -6,7 +6,7 @@ The application does not require an account, subscription, cloud database, or in
 
 ## Current release
 
-The current Windows release is **0.5.4**. The first public Android release is **0.1.0**; Android versions use an independent release line so they do not interfere with the Windows updater.
+The current Windows release is **0.5.5**. The first public Android release is **0.1.0**; Android versions use an independent release line so they do not interfere with the Windows updater.
 
 - [GitHub releases](https://github.com/mcographics/WordsofYeshua/releases)
 - Windows architecture: x64
@@ -168,7 +168,7 @@ The NSIS installer provides a conventional Windows wizard, selectable installati
 
 The installed Windows app includes an **App updates** section under Settings:
 
-- **Check for update** checks GitHub Releases and downloads a newer installer when one is available.
+- **Check for update** checks only stable Windows releases tagged `v<major>.<minor>.<patch>` and downloads a newer installer when one is available. Android tags such as `android-v0.1.0` are excluded.
 - **Install Update** installs an already-downloaded release, or performs the check and download first when needed. The app closes for installation and reopens automatically.
 - **View Latest on GitHub** opens the latest release page for release notes and files.
 - The update panel reports the current and available versions and shows live percentage, transferred size, total size, and download speed.

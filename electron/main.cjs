@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, net, protocol, shell } = require('electron')
 const { autoUpdater } = require('electron-updater')
+const { fetchLatestWindowsRelease } = require('./windows-update-checker.cjs')
 const fs = require('node:fs')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
@@ -15,7 +16,8 @@ if (process.platform === 'win32') {
 let nativeEngine = null
 let nativeLoadError = null
 const windows = new Set()
-const GITHUB_RELEASES_URL = 'https://github.com/mcographics/WordsofYeshua/releases/latest'
+const GITHUB_RELEASES_URL = 'https://github.com/mcographics/WordsofYeshua/releases'
+let latestWindowsReleaseUrl = `https://github.com/mcographics/WordsofYeshua/releases/tag/v${app.getVersion()}`
 let updateOperation = null
 let updateDownloaded = false
 let installWhenReady = false
@@ -192,6 +194,9 @@ async function checkAndDownloadUpdate({ installAfterDownload = false } = {}) {
         total: 0,
         bytesPerSecond: 0,
       })
+      const windowsRelease = await fetchLatestWindowsRelease({ currentVersion: app.getVersion() })
+      latestWindowsReleaseUrl = windowsRelease.releaseUrl
+      autoUpdater.setFeedURL(windowsRelease.feedUrl)
       await autoUpdater.checkForUpdates()
       if (!availableUpdate) return updateState
 
@@ -301,7 +306,15 @@ ipcMain.handle('updates:install', (event) => {
 
 ipcMain.handle('updates:view-latest', async (event) => {
   requireTrustedUpdateRequest(event)
-  await shell.openExternal(GITHUB_RELEASES_URL)
+  if (canUseAutoUpdater()) {
+    try {
+      const windowsRelease = await fetchLatestWindowsRelease({ currentVersion: app.getVersion() })
+      latestWindowsReleaseUrl = windowsRelease.releaseUrl
+    } catch {
+      // Open the last known Windows release when GitHub is temporarily unavailable.
+    }
+  }
+  await shell.openExternal(latestWindowsReleaseUrl || GITHUB_RELEASES_URL)
   return true
 })
 

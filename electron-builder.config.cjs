@@ -14,6 +14,7 @@ module.exports = {
     'electron/**/*',
     'package.json',
     '!electron/native-smoke.cjs',
+    '!electron/**/*.test.mjs',
   ],
   extraResources: [
     {

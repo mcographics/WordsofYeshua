@@ -1,7 +1,7 @@
 {
   "name": "words-of-yeshua",
   "private": true,
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "A Christ-centred, local-first Bible reader and study companion for exploring the words of Yeshua in scriptural context.",
   "main": "electron/main.cjs",
   "author": "Words of Yeshua",
