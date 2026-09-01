@@ -24,8 +24,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          lfs: true
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -43,8 +41,8 @@ jobs:
       - name: Install web dependencies
         run: npm ci --ignore-scripts
 
-      - name: Build web app
-        run: npm run build
+      - name: Build web app from checked-in generated content
+        run: npx tsc -b && npx vite build
 
       - name: Sync Capacitor Android project
         run: npx cap sync android
