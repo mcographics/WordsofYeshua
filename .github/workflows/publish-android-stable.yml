@@ -1,0 +1,142 @@
+name: Publish Android Stable Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ANDROID_RELEASE_0.1.2.md'
+      - '.github/workflows/publish-android-stable.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-stable-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ANDROID_VERSION: '0.1.2'
+      ANDROID_VERSION_CODE: '100002'
+      ANDROID_TAG: 'android-v0.1.2'
+      ANDROID_ASSET: 'Words-of-Yeshua-Android-0.1.2.apk'
+      BASELINE_TAG: 'android-v0.1.0'
+      BASELINE_ASSET: 'Words-of-Yeshua-Android-0.1.0.apk'
+      WOY_ANDROID_KEYSTORE_BASE64: ${{ secrets.WOY_ANDROID_KEYSTORE_BASE64 }}
+      WOY_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.WOY_ANDROID_KEYSTORE_PASSWORD }}
+      WOY_ANDROID_KEY_ALIAS: ${{ secrets.WOY_ANDROID_KEY_ALIAS }}
+      WOY_ANDROID_KEY_PASSWORD: ${{ secrets.WOY_ANDROID_KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: npm
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Require production Android signing secrets
+        shell: bash
+        run: |
+          missing=0
+          for name in WOY_ANDROID_KEYSTORE_BASE64 WOY_ANDROID_KEYSTORE_PASSWORD WOY_ANDROID_KEY_ALIAS WOY_ANDROID_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: ${name}"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "The stable Android release was not published because the original production signing key is not available to GitHub Actions."
+            exit 1
+          fi
+
+      - name: Restore production signing key
+        shell: bash
+        run: |
+          KEYSTORE_PATH="${RUNNER_TEMP}/wordsofyeshua-release.jks"
+          PROPERTIES_PATH="${RUNNER_TEMP}/wordsofyeshua-release-signing.properties"
+          printf '%s' "${WOY_ANDROID_KEYSTORE_BASE64}" | base64 --decode > "${KEYSTORE_PATH}"
+          chmod 600 "${KEYSTORE_PATH}"
+          {
+            printf 'storeFile=%s\n' "${KEYSTORE_PATH}"
+            printf 'storePassword=%s\n' "${WOY_ANDROID_KEYSTORE_PASSWORD}"
+            printf 'keyAlias=%s\n' "${WOY_ANDROID_KEY_ALIAS}"
+            printf 'keyPassword=%s\n' "${WOY_ANDROID_KEY_PASSWORD}"
+          } > "${PROPERTIES_PATH}"
+          chmod 600 "${PROPERTIES_PATH}"
+          echo "WORDSOFYESHUA_ANDROID_SIGNING_PROPERTIES=${PROPERTIES_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build web app from checked-in generated content
+        run: npx tsc -b && npx vite build
+
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
+
+      - name: Build production release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace \
+            -PandroidVersionCode=${ANDROID_VERSION_CODE} \
+            -PandroidVersionName=${ANDROID_VERSION}
+
+      - name: Verify signature matches Android v0.1.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          RELEASE_APK='android/app/build/outputs/apk/release/app-release.apk'
+          test -f "${RELEASE_APK}" || { echo '::error::Signed release APK was not produced.'; exit 1; }
+
+          APKSIGNER="$(find "${ANDROID_HOME}/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -x "${APKSIGNER}" || { echo '::error::apksigner was not found.'; exit 1; }
+          "${APKSIGNER}" verify --verbose --print-certs "${RELEASE_APK}"
+
+          mkdir -p "${RUNNER_TEMP}/baseline"
+          gh release download "${BASELINE_TAG}" --pattern "${BASELINE_ASSET}" --dir "${RUNNER_TEMP}/baseline"
+          BASELINE_APK="${RUNNER_TEMP}/baseline/${BASELINE_ASSET}"
+          "${APKSIGNER}" verify --verbose --print-certs "${BASELINE_APK}"
+
+          NEW_CERT="$("${APKSIGNER}" verify --print-certs "${RELEASE_APK}" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n 1)"
+          OLD_CERT="$("${APKSIGNER}" verify --print-certs "${BASELINE_APK}" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n 1)"
+
+          if [ -z "${NEW_CERT}" ] || [ -z "${OLD_CERT}" ]; then
+            echo '::error::Could not read APK signing certificate digests.'
+            exit 1
+          fi
+          if [ "${NEW_CERT}" != "${OLD_CERT}" ]; then
+            echo '::error::Signing certificate does not match Android v0.1.0. Refusing to publish an incompatible update.'
+            exit 1
+          fi
+          echo "Signing certificate verified against ${BASELINE_TAG}."
+
+      - name: Prepare release asset
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk "${ANDROID_ASSET}"
+          sha256sum "${ANDROID_ASSET}"
+
+      - name: Publish stable GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view "${ANDROID_TAG}" >/dev/null 2>&1; then
+            echo "::error::Release ${ANDROID_TAG} already exists; refusing to overwrite a production release."
+            exit 1
+          fi
+          gh release create "${ANDROID_TAG}" "${ANDROID_ASSET}" \
+            --target "${GITHUB_SHA}" \
+            --title "Words of Yeshua Android v${ANDROID_VERSION}" \
+            --notes-file ANDROID_RELEASE_0.1.2.md \
+            --latest=false
